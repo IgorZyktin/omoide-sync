@@ -1,14 +1,27 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "omoide-sync"
 version = "0.1.0"
-description = ""
-authors = ["Igor <nicord@yandex.ru>"]
+description = "CLI tool that synchronizes local storage with Omoide account"
 readme = "README.md"
+authors = [
+    { name = "Igor Zyktin", email = "nicord@yandex.ru" }
+]
+license = { text = "MIT License" }
+requires-python = ">= 3.10"
+dependencies = [
+    "PyYAML >= 6.0.0",
+    "pydantic-settings >= 2.3.0",
+    "requests >= 2.32.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
+[project.scripts]
+omoide-sync = "omoide_sync:__main__"
 
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Homepage = "https://www.omoide.ru"
+Repository = "https://github.com/IgorZyktin/omoide-sync"
+Issues = "https://github.com/IgorZyktin/omoide-sync/issues"
