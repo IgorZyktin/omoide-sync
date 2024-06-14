@@ -11,7 +11,6 @@ def main():
     config = cfg.get_config()
     startup.setup_logger(config)
     logger = logging.getLogger(__name__)
-    logger.debug('Got config %s', config)
 
     try:
         storage = startup.get_storage_handler(config)
