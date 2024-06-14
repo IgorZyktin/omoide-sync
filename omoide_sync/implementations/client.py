@@ -29,7 +29,7 @@ class SeleniumClient(interfaces.AbsClient):
         self._item_cache_by_name: dict[str, models.Item] = {}
         self._item_cache_by_uuid: dict[UUID, models.Item] = {}
 
-    def get_item(self, item: models.Item) -> models.Item:
+    def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
         cached_by_name = self._item_cache_by_name.get(item.name)
         cached_by_uuid = self._item_cache_by_uuid.get(item.uuid)
@@ -37,12 +37,6 @@ class SeleniumClient(interfaces.AbsClient):
 
         if cached:
             return cached
-
-        payload = json.dumps({
-            'user_login': item.owner.login,
-            'parent_name': item.parent.name if item.parent else None,
-            'item_name': item.name,
-        }, ensure_ascii=False)
 
         if item.uuid:
             r = requests.get(
@@ -56,6 +50,12 @@ class SeleniumClient(interfaces.AbsClient):
             )
 
         else:
+            payload = json.dumps({
+                'user_login': item.owner.login,
+                'parent_name': item.parent.name if item.parent else None,
+                'item_name': item.name,
+            }, ensure_ascii=False)
+
             r = requests.get(
                 f'{self.config.url}/api/items-by-name/',
                 headers={'Content-Type': 'application/json; charset=UTF-8'},
@@ -67,6 +67,9 @@ class SeleniumClient(interfaces.AbsClient):
                 timeout=3,
             )
 
+        if r.status_code == http.HTTPStatus.NOT_FOUND:
+            return None
+
         if r.status_code != http.HTTPStatus.OK:
             if item.uuid:
                 msg = f'Failed to get item {item.uuid}'
@@ -75,7 +78,6 @@ class SeleniumClient(interfaces.AbsClient):
             raise exceptions.NetworkRelatedException(msg)
 
         outer_item = r.json()
-        LOG.warning(outer_item)  # FIXME
         item.uuid = UUID(outer_item['uuid'])
         self._item_cache_by_uuid[item.uuid] = item
         self._item_cache_by_name[item.name] = item
@@ -91,9 +93,13 @@ class SeleniumClient(interfaces.AbsClient):
         if cached:
             return cached
 
+        # TODO - actually create item
+
         return item
 
     def upload(self, item: models.Item) -> models.Item:
         """Load item content in the API."""
+
         # TODO - actually load data
+
         return item
