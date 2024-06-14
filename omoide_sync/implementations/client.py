@@ -46,6 +46,18 @@ class SeleniumClient(interfaces.AbsClient):
         )
         self._driver = driver
 
+    def _make_url_with_auth(self, item: models.Item) -> str:
+        """Make url that will allow us to login."""
+        if self.config.url.startswith('https://'):
+            prefix = 'https://'
+            url_end = self.config.url[8:]
+        else:
+            # noinspection HttpUrlsUsage
+            prefix = 'http://'
+            url_end = self.config.url[7:]
+
+        return f'{prefix}{item.owner.login}:{item.owner.password}@{url_end}'
+
     def stop(self) -> None:
         """Finish work."""
         self.driver.close()
@@ -179,7 +191,13 @@ class SeleniumClient(interfaces.AbsClient):
 
     def upload(self, item: models.Item, paths: dict[str, str]) -> models.Item:
         """Crete Item in the API."""
-        self.driver.get(f'{self.config.url}/upload/{item.uuid}')
+        # logging in
+        auth_url = self._make_url_with_auth(item)
+        self._driver.get(f'{auth_url}/login')
+
+        upload_url = f'{self.config.url}/upload/{item.uuid}'
+        LOG.info(f'Uploading to {item.uuid} {item.name}: {upload_url}')
+        self.driver.get(upload_url)
 
         js_code = "arguments[0].scrollIntoView();"
 
