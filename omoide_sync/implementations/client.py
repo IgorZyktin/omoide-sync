@@ -68,6 +68,10 @@ class SeleniumClient(interfaces.AbsClient):
         if cached:
             return cached
 
+        payload = json.dumps({
+            'name': item.name,
+        }, ensure_ascii=False)
+
         if item.uuid:
             r = requests.get(
                 f'{self.config.url}/api/items/{item.uuid}',
@@ -80,10 +84,6 @@ class SeleniumClient(interfaces.AbsClient):
             )
 
         else:
-            payload = json.dumps({
-                'name': item.name,
-            }, ensure_ascii=False)
-
             r = requests.get(
                 f'{self.config.url}/api/items/by-name',
                 headers={'Content-Type': 'application/json; charset=UTF-8'},
@@ -107,7 +107,7 @@ class SeleniumClient(interfaces.AbsClient):
             else:
                 msg = (
                     f'Failed to get item by name {item.name!r}: '
-                    f'{r.status_code} {r.text}'
+                    f'{r.status_code} {r.text}, payload {payload}'
                 )
             raise exceptions.NetworkRelatedException(msg)
 
