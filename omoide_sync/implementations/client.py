@@ -193,10 +193,13 @@ class SeleniumClient(interfaces.AbsClient):
         """Crete Item in the API."""
         # logging in
         auth_url = self._make_url_with_auth(item)
-        self._driver.get(f'{auth_url}/login')
+        self.driver.get(f'{auth_url}/login')
 
         upload_url = f'{self.config.url}/upload/{item.uuid}'
-        LOG.info(f'Uploading to {item.uuid} {item.name}: {upload_url}')
+        LOG.info(
+            f'Uploading to {item.uuid} {item.name}: '
+            f'{upload_url} {len(item.children)} items'
+        )
         self.driver.get(upload_url)
 
         js_code = "arguments[0].scrollIntoView();"
@@ -219,8 +222,7 @@ class SeleniumClient(interfaces.AbsClient):
         time.sleep(1)
         upload_input.send_keys(all_files)
 
-        self._wait_for_upload(timeout=1000)
-        self._wait_for_processing()
+        self._wait_for_upload(timeout=600)
 
         return item
 
@@ -239,13 +241,8 @@ class SeleniumClient(interfaces.AbsClient):
                 LOG.info('Still waiting...')
                 time.sleep(5)
             else:
+                LOG.info('Done uploading')
                 return
 
         msg = f'Failed to upload even after {deadline} seconds'
         raise RuntimeError(msg)
-
-    @staticmethod
-    def _wait_for_processing() -> None:
-        """Waif for files to be processed."""
-        # NOTE - not really progressive...
-        time.sleep(600)
