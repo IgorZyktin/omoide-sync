@@ -47,6 +47,9 @@ class Logic(interfaces.AbsLogic):
             if not self.client.get_item(item):
                 self.create_chain(item)
 
+            if not item.children:
+                continue
+
             paths = self.storage.get_paths(item)
             self.client.upload(item, paths)
             self.storage.prepare_termination(item)
