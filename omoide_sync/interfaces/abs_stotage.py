@@ -25,6 +25,10 @@ class AbsStorage(abc.ABC):
         """Iterate on all items."""
 
     @abc.abstractmethod
+    def prepare_termination(self, item: models.Item) -> None:
+        """Create resources if need to."""
+
+    @abc.abstractmethod
     def terminate_item(self, item: models.Item) -> None:
         """Finish item processing."""
 

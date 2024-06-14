@@ -43,6 +43,8 @@ class Logic(interfaces.AbsLogic):
                 self.create_chain(item)
 
             self.client.upload(item)
+            self.storage.prepare_termination(item)
+
             for sub_item in item.children:
                 self.storage.terminate_item(sub_item)
 

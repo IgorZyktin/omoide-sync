@@ -49,24 +49,15 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         raise exceptions.UserRelatedException(msg)
 
     @staticmethod
-    def _get_collection_setup(
-        path: Path,
-        parent: models.Item | None,
-    ) -> models.Setup:
+    def _get_collection_setup(path: Path) -> models.Setup:
         """Load personal settings for this collection."""
-        if parent:
-            parent_setup = parent.setup.model_dump()
-        else:
-            parent_setup = {}
-
         try:
-            with open(path / const.SETUP_FILENAME) as f:
+            with open(path / const.SETUP_FILENAME, encoding='utf-8') as f:
                 raw_setup = yaml.safe_load(f)
         except FileNotFoundError:
-            setup = models.Setup(**parent_setup)
+            setup = models.Setup()
         else:
-            parent_setup.update(raw_setup)
-            setup = models.Setup(**parent_setup)
+            setup = models.Setup(**raw_setup)
 
         return setup
 
@@ -100,7 +91,7 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         parent: models.Item | None,
     ) -> Iterator[models.Item]:
         """Scan folder and return it as a collection."""
-        setup = self._get_collection_setup(path, parent)
+        setup = self._get_collection_setup(path)
 
         collection = models.Item(
             uuid=None,
@@ -114,7 +105,7 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         )
 
         for each in path.iterdir():
-            if each.is_file():
+            if each.is_file() and not each.name.startswith('_'):
                 item = self._process_file(user, each, collection)
                 if item:
                     collection.children.append(item)
@@ -160,7 +151,6 @@ class FileStorage(_FileStorageBase):
             uploaded=0,
             setup=self._get_collection_setup(
                 path=self.config.root_folder / user.name,
-                parent=None,
             )
         )
 
@@ -185,10 +175,28 @@ class FileStorage(_FileStorageBase):
         path = self.config.root_folder / user.login
 
         for folder in path.iterdir():
-            if folder.is_dir():
+            if folder.is_dir() and not folder.name.startswith('_'):
                 yield from self._process_folder(user, folder, parent=None)
 
+    def prepare_termination(self, item: models.Item) -> None:
+        """Create resources if need to."""
+        move1 = item.setup.termination_strategy_item == const.TERMINATION_MOVE
+        move2 = (item.setup.termination_strategy_collection
+                    == const.TERMINATION_MOVE)
+
+        if (move1 or move2) and item.setup.treat_as_collection:
+            path = self._get_item_path(item)
+            source_path = self.config.root_folder / path
+            dest_path = self.config.trash_folder / path
+            if not self.config.dry_run:
+                shutil.copytree(
+                    source_path,
+                    dest_path,
+                    dirs_exist_ok=True,
+                )
+
     def terminate_item(self, item: models.Item) -> None:
+
         """Finish item processing."""
         path = self._get_item_path(item)
         full_path = self.config.root_folder / path
@@ -226,8 +234,8 @@ class FileStorage(_FileStorageBase):
                         dest_path,
                         dirs_exist_ok=True,
                     )
-                    for each in source_path.iterdir():
-                        shutil.move(each, dest_path)
+
+                    shutil.rmtree(source_path)
 
             case const.TERMINATION_DELETE:
                 full_path = self.config.root_folder / path
