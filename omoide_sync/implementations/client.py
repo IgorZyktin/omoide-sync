@@ -127,17 +127,28 @@ class SeleniumClient(interfaces.AbsClient):
         if cached:
             return cached
 
-        if item.parent is None:
+        if item.real_parent is None:
             parent_uuid = str(item.owner.root_item)
         else:
-            parent_uuid = str(item.parent.uuid) if item.parent.uuid else None
+            parent_uuid = (
+                str(item.real_parent.uuid) if item.real_parent.uuid else None
+            )
+
+        tags: list[str] = []
+        if item.setup.treat_as_collection:
+            tags = item.setup.tags
+        else:
+            for each in reversed(item.ancestors):
+                if each.setup.treat_as_collection:
+                    tags = each.setup.tags
+                    break
 
         payload = json.dumps({
             'uuid': None,
             'parent_uuid': parent_uuid,
             'name': item.name,
             'is_collection': item.is_collection,
-            'tags': item.setup.tags,
+            'tags': tags,
             'permissions': [],
         }, ensure_ascii=False)
 
