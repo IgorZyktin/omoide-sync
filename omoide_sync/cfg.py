@@ -20,6 +20,7 @@ class RawUser(TypedDict):
 class Config(BaseSettings):
     """Global configuration."""
     url: str
+    driver: str
     auth_data: list[RawUser]
     root_folder: Path
     trash_folder: Path | None = None

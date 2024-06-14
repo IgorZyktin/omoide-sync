@@ -6,6 +6,10 @@ class OmoideSyncException(Exception):
     """General base class for all exceptions."""
 
 
+class ConfigRelatedException(OmoideSyncException):
+    """Got problem with config."""
+
+
 class UserRelatedException(OmoideSyncException):
     """Got problem with user."""
 

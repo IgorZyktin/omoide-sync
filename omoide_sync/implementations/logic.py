@@ -27,9 +27,14 @@ class Logic(interfaces.AbsLogic):
         """Start processing."""
         users = self.storage.get_users()
 
-        for user in users:
-            LOG.debug('Working with user %s', user.name)
-            self.process_single_user(user)
+        try:
+            self.client.start()
+
+            for user in users:
+                LOG.debug('Working with user %s', user.name)
+                self.process_single_user(user)
+        finally:
+            self.client.stop()
 
     def process_single_user(self, user: models.User) -> None:
         """Upload data for given user."""
@@ -42,7 +47,8 @@ class Logic(interfaces.AbsLogic):
             if not self.client.get_item(item):
                 self.create_chain(item)
 
-            self.client.upload(item)
+            paths = self.storage.get_paths(item)
+            self.client.upload(item, paths)
             self.storage.prepare_termination(item)
 
             for sub_item in item.children:

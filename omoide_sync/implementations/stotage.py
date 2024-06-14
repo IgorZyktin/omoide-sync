@@ -136,7 +136,7 @@ class FileStorage(_FileStorageBase):
 
     def get_root_item(self, user: models.User) -> models.Item | None:
         """Return root item for given user."""
-        # TODO - theoretically, we should request this from the API.
+        # NOTE - theoretically, we should request this from the API.
         #  But currently this functionality is not supported there.
         if user.root_item is None:
             return None
@@ -177,6 +177,16 @@ class FileStorage(_FileStorageBase):
         for folder in path.iterdir():
             if folder.is_dir() and not folder.name.startswith('_'):
                 yield from self._process_folder(user, folder, parent=None)
+
+    def get_paths(self, item: models.Item) -> dict[str, str]:
+        """Return path to data for every child item."""
+        paths: dict[str, str] = {}
+
+        for child in item.children:
+            child_path = self.config.root_folder / self._get_item_path(child)
+            paths[child.name] = str(child_path.absolute())
+
+        return paths
 
     def prepare_termination(self, item: models.Item) -> None:
         """Create resources if need to."""

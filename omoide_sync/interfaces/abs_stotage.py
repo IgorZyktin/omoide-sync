@@ -25,6 +25,10 @@ class AbsStorage(abc.ABC):
         """Iterate on all items."""
 
     @abc.abstractmethod
+    def get_paths(self, item: models.Item) -> dict[str, str]:
+        """Return path to data for every child item."""
+
+    @abc.abstractmethod
     def prepare_termination(self, item: models.Item) -> None:
         """Create resources if need to."""
 
