@@ -3,7 +3,6 @@
 from pathlib import Path
 from uuid import UUID
 
-from pydantic import SecretStr
 from typing_extensions import TypedDict
 
 from pydantic_settings import BaseSettings
@@ -15,7 +14,7 @@ class RawUser(TypedDict):
     name: str
     login: str
     root_item: UUID
-    password: SecretStr
+    password: str
 
 
 class Config(BaseSettings):

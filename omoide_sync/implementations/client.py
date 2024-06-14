@@ -51,13 +51,11 @@ class SeleniumClient(interfaces.AbsClient):
 
         else:
             payload = json.dumps({
-                'user_login': item.owner.login,
-                'parent_name': item.parent.name if item.parent else None,
-                'item_name': item.name,
+                'name': item.name,
             }, ensure_ascii=False)
 
             r = requests.get(
-                f'{self.config.url}/api/items-by-name/',
+                f'{self.config.url}/api/items-by-name',
                 headers={'Content-Type': 'application/json; charset=UTF-8'},
                 auth=(
                     item.owner.login,
@@ -72,9 +70,15 @@ class SeleniumClient(interfaces.AbsClient):
 
         if r.status_code != http.HTTPStatus.OK:
             if item.uuid:
-                msg = f'Failed to get item {item.uuid}'
+                msg = (
+                    f'Failed to get item {item.uuid}: '
+                    f'{r.status_code} {r.text}'
+                )
             else:
-                msg = f'Failed to get item by name {item.name!r}'
+                msg = (
+                    f'Failed to get item by name {item.name!r}: '
+                    f'{r.status_code} {r.text}'
+                )
             raise exceptions.NetworkRelatedException(msg)
 
         outer_item = r.json()
@@ -93,9 +97,14 @@ class SeleniumClient(interfaces.AbsClient):
         if cached:
             return cached
 
+        if item.parent is None:
+            parent_uuid = str(item.owner.root_item)
+        else:
+            parent_uuid = str(item.parent.uuid) if item.parent.uuid else None
+
         payload = json.dumps({
             'uuid': None,
-            'parent_uuid': str(item.parent.uuid) if item.parent else None,
+            'parent_uuid': parent_uuid,
             'name': item.name,
             'is_collection': item.is_collection,
             'tags': item.setup.tags,
@@ -103,7 +112,7 @@ class SeleniumClient(interfaces.AbsClient):
         }, ensure_ascii=False)
 
         r = requests.post(
-            f'{self.config.url}/api/items/',
+            f'{self.config.url}/api/items',
             headers={'Content-Type': 'application/json; charset=UTF-8'},
             auth=(
                 item.owner.login,
@@ -114,7 +123,10 @@ class SeleniumClient(interfaces.AbsClient):
         )
 
         if r.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED):
-            msg = f'Failed to create item {item.name}:{r.text!r}'
+            msg = (
+                f'Failed to create item {item.name}: '
+                f'{r.status_code} {r.text!r}, payload: {payload}'
+            )
             raise exceptions.NetworkRelatedException(msg)
 
         outer_item = r.json()
