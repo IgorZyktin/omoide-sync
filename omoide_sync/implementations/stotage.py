@@ -232,7 +232,7 @@ class FileStorage(_FileStorageBase):
         """Finish collection processing."""
         path = self._get_item_path(item)
 
-        match item.setup.termination_strategy_item:
+        match item.setup.termination_strategy_collection:
             case const.TERMINATION_MOVE:
                 source_path = self.config.root_folder / path
                 dest_path = self.config.trash_folder / path
