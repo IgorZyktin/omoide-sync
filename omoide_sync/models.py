@@ -79,3 +79,16 @@ class Item:
             parent = parent.parent
 
         return list(reversed(ancestors))
+
+    @property
+    def real_parent(self) -> Optional['Item']:
+        """Return first parent that is treated as a collection."""
+        parent = self.parent
+
+        while parent:
+            if parent.setup.treat_as_collection:
+                return parent
+
+            parent = parent.parent
+
+        return parent

@@ -46,22 +46,29 @@ class Logic(interfaces.AbsLogic):
             for sub_item in item.children:
                 self.storage.terminate_item(sub_item)
 
-            if item.parent:
-                item.parent.uploaded += 1
+            if item.real_parent:
+                item.real_parent.uploaded += 1
 
             self.storage.terminate_collection(item)
 
     def create_chain(self, item: models.Item) -> None:
         """Create whole chain of items."""
         if item.setup.treat_as_collection:
-            ancestors = item.ancestors
+            names: list[str] = [item.owner.name]
+            for ancestor in item.ancestors:
+                if ancestor.setup.treat_as_collection:
+                    names.append(ancestor.name)
+                    if not self.client.get_item(ancestor):
+                        self.client.create_item(ancestor)
+                else:
+                    names.append(f'!{ancestor.name}!')
+
+            names.append(item.name)
+
             LOG.info(
-                'Creating collection %s with tags %s',
-                ' -> '.join(x.name for x in ancestors),
+                'Created collection %s %s',
+                ' -> '.join(names),
                 item.setup.tags,
             )
-            for ancestor in ancestors:
-                if not self.client.get_item(ancestor):
-                    self.client.create_item(ancestor)
 
             self.client.create_item(item)
