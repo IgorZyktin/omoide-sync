@@ -22,8 +22,8 @@ class AbsClient(abc.ABC):
 
     @abc.abstractmethod
     def create_item(self, item: models.Item) -> models.Item:
-        """Crete Item in the API."""
+        """Create Item in the API."""
 
     @abc.abstractmethod
     def upload(self, item: models.Item, paths: dict[str, str]) -> models.Item:
-        """Crete Item in the API."""
+        """Create Item in the API."""

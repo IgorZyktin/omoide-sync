@@ -143,15 +143,20 @@ tags:
 # адрес сайта для загрузки данных
 OMOIDE_SYNC__URL=https://www.omoide.ru
 # список с данными пользователей
-OMOIDE_SYNC__AUTH_DATA='[{"name": "User", "login": "user123", "password": "qwerty"}]'
+OMOIDE_SYNC__AUTH_DATA='[{"name": "User", "login": "user123", "password": "qwerty", "root_item": "34c1b109-f742-43ad-b41b-0515ea865b9d"}]'
 # каталог с картинками
 OMOIDE_SYNC__ROOT_FOLDER=/home/user/pictures
 # корзина для загруженных файлов
 OMOIDE_SYNC__TRASH_FOLDER=/home/user/pictures_uploaded
-# не обрабатывать файлы, только описать, что будет сделано
+# если true - не обрабатывать файлы, и не создавать записи, только описать, что будет сделано
 OMOIDE_SYNC__DRY_RUN=false
 # уровень логирования
 OMOIDE_SYNC__LOG_LEVEL=info
 # уровень логирования
-OMOIDE_SYNC__SUPPORTED_FORMATS=[".png", ".jpg", ".webp"]
+OMOIDE_SYNC__SUPPORTED_FORMATS=[".png", ".jpg", ".jpeg", ".webp"]
+# путь до экземпляра selenium
+OMOIDE_SYNC__DRIVER=http://127.0.0.1:4444/wd/hub
 ```
+
+В настоящий момент для загрузки данных нужен рабочий процесс `Selenium` 
+т.к. обработка изображений выполняется `JavaScript` на стороне клиента.
