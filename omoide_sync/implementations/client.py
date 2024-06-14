@@ -85,7 +85,7 @@ class SeleniumClient(interfaces.AbsClient):
             }, ensure_ascii=False)
 
             r = requests.get(
-                f'{self.config.url}/api/items-by-name',
+                f'{self.config.url}/api/items/by-name',
                 headers={'Content-Type': 'application/json; charset=UTF-8'},
                 auth=(
                     item.owner.login,
