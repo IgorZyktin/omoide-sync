@@ -93,7 +93,34 @@ class SeleniumClient(interfaces.AbsClient):
         if cached:
             return cached
 
-        # TODO - actually create item
+        payload = json.dumps({
+            'uuid': None,
+            'parent_uuid': str(item.parent.uuid) if item.parent else None,
+            'name': item.name,
+            'is_collection': item.is_collection,
+            'tags': item.setup.tags,
+            'permissions': [],
+        }, ensure_ascii=False)
+
+        r = requests.post(
+            f'{self.config.url}/api/items/',
+            headers={'Content-Type': 'application/json; charset=UTF-8'},
+            auth=(
+                item.owner.login,
+                item.owner.password,
+            ),
+            data=payload.encode('utf-8'),
+            timeout=5,
+        )
+
+        if r.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED):
+            msg = f'Failed to create item {item.name}:{r.text!r}'
+            raise exceptions.NetworkRelatedException(msg)
+
+        outer_item = r.json()
+        item.uuid = UUID(outer_item['uuid'])
+        self._item_cache_by_uuid[item.uuid] = item
+        self._item_cache_by_name[item.name] = item
 
         return item
 
