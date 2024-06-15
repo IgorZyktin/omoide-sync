@@ -39,13 +39,13 @@ class Logic(interfaces.AbsLogic):
     def process_single_user(self, user: models.User) -> None:
         """Upload data for given user."""
         for item in self.storage.get_all_collections(user):
+            if not self.client.get_item(item):
+                self.create_chain(item)
+
             LOG.debug('Processing collection %s', item)
 
             if item.uploaded_enough:
                 continue
-
-            if not self.client.get_item(item):
-                self.create_chain(item)
 
             if not item.children:
                 continue
