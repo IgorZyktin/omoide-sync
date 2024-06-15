@@ -31,7 +31,8 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
     def _find_matching_user(self, folder_name: str) -> models.User:
         """Scan through auth data."""
         for each in self.config.auth_data:
-            # NOTE: here we could get collision between login and name
+            # TODO - here we could get collision between login and name
+            #  better try to log in as user first and proceed only after that
             if all(
                 (
                     any(
@@ -140,7 +141,7 @@ class FileStorage(_FileStorageBase):
 
     def get_root_item(self, user: models.User) -> models.Item | None:
         """Return root item for given user."""
-        # NOTE - theoretically, we should request this from the API.
+        # TODO - we should request this info from the API.
         #  But currently this functionality is not supported there.
         return models.Item(
             uuid=user.root_item,

@@ -32,6 +32,11 @@ class Config(BaseSettings):
         '.jpeg',
         '.webp',
     }
+    wait_for_upload: int = 600
+    wait_after_upload: int = 0
+    wait_step_for_upload: int = 5
+    wait_for_page_load: float = 1.0
+    request_timeout: float = 5.0
 
     model_config = SettingsConfigDict(
         env_prefix='OMOIDE_SYNC__',
