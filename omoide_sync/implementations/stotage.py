@@ -202,7 +202,23 @@ class FileStorage(_FileStorageBase):
             path = self._get_item_path(item)
             source_path = self.config.root_folder / path
             dest_path = self.config.trash_folder / path
-            if not self.config.dry_run:
+
+            if self.config.dry_run:
+                LOG.debug(
+                    'Supposed to copy folder tree because '
+                    'of collection %s from %s to %s',
+                    item,
+                    source_path,
+                    dest_path,
+                )
+            else:
+                LOG.debug(
+                    'Copying folder tree because '
+                    'of collection %s from %s to %s',
+                    item,
+                    source_path,
+                    dest_path,
+                )
                 shutil.copytree(
                     source_path,
                     dest_path,
@@ -210,24 +226,40 @@ class FileStorage(_FileStorageBase):
                 )
 
     def terminate_item(self, item: models.Item) -> None:
-
         """Finish item processing."""
         path = self._get_item_path(item)
-        full_path = self.config.root_folder / path
 
         match item.setup.termination_strategy_item:
             case const.TERMINATION_MOVE:
                 source_path = self.config.root_folder / path
                 dest_path = self.config.trash_folder / path
 
-                if not self.config.dry_run:
+                if self.config.dry_run:
+                    LOG.debug(
+                        'Supposed to move item %s from %s to %s',
+                        item,
+                        source_path,
+                        dest_path,
+                    )
+                else:
+                    LOG.debug(
+                        'Moving item %s from %s to %s',
+                        item,
+                        source_path,
+                        dest_path,
+                    )
                     shutil.move(
                         source_path,
                         dest_path,
                     )
 
             case const.TERMINATION_DELETE:
-                if not self.config.dry_run:
+                full_path = self.config.root_folder / path
+
+                if self.config.dry_run:
+                    LOG.debug('Supposed to delete %s at %s', item, full_path)
+                else:
+                    LOG.debug('Deleting %s at %s', item, full_path)
                     os.remove(full_path)
 
         return
@@ -241,8 +273,20 @@ class FileStorage(_FileStorageBase):
                 source_path = self.config.root_folder / path
                 dest_path = self.config.trash_folder / path
 
-                LOG.debug('Moving folder %s -> %s', source_path, dest_path)
-                if not self.config.dry_run:
+                if self.config.dry_run:
+                    LOG.debug(
+                        'Supposed to move collection %s from %s to %s',
+                        item,
+                        source_path,
+                        dest_path,
+                    )
+                else:
+                    LOG.debug(
+                        'Moving collection %s from %s to %s',
+                        item,
+                        source_path,
+                        dest_path,
+                    )
                     shutil.copytree(
                         source_path,
                         dest_path,
@@ -254,19 +298,34 @@ class FileStorage(_FileStorageBase):
             case const.TERMINATION_DELETE:
                 full_path = self.config.root_folder / path
 
-                unexpected = (
-                    set(full_path.iterdir()) - const.SETUP_FILENAMES
+                filenames = set(
+                    each.name
+                    for each in full_path.iterdir()
+                    if each.is_file()
                 )
 
-                if unexpected:
+                unexpected_files = filenames - const.SETUP_FILENAMES
+                must_be_deleted = (
+                    item.setup.termination_strategy_item
+                    == const.TERMINATION_DELETE
+                )
+
+                if unexpected_files and must_be_deleted:
                     msg = (
                         f'Cannot delete folder {path}, '
-                        f'it has additional files inside: {sorted(unexpected)}'
+                        f'it has additional files inside: '
+                        f'{sorted(unexpected_files)}'
                     )
                     raise exceptions.StorageRelatedException(msg)
 
-                LOG.debug('Deleting folder %s', full_path)
-                if not self.config.dry_run:
+                if self.config.dry_run:
+                    LOG.debug(
+                        'Supposed to delete collection %s at %s',
+                        item,
+                        full_path,
+                    )
+                else:
+                    LOG.debug('Deleting collection %s at ', item, full_path)
                     shutil.rmtree(full_path)
 
         return

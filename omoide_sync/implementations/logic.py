@@ -68,18 +68,18 @@ class Logic(interfaces.AbsLogic):
             names: list[str] = [item.owner.name]
             for ancestor in item.ancestors:
                 if ancestor.setup.treat_as_collection:
-                    names.append(ancestor.name)
-                    if not self.client.get_item(ancestor):
+                    if self.client.get_item(ancestor):
+                        # already exist
+                        names.append(f'{ancestor.name}')
+                    else:
+                        # newly created
+                        names.append(f'!!!{ancestor.name}!!!')
                         self.client.create_item(ancestor)
                 else:
-                    names.append(f'!{ancestor.name}!')
+                    # not a collection
+                    names.append(f'???{ancestor.name}???')
 
-            names.append(item.name)
-
-            self.client.create_item(item)
-
-            LOG.info(
-                'Created collection %s %s',
-                ' -> '.join(names),
-                item.setup.tags,
-            )
+            if not self.client.get_item(item):
+                self.client.create_item(item)
+                names.append(f'!!!{item.name}!!!')
+                LOG.info('Created collection %s', ' -> '.join(names))

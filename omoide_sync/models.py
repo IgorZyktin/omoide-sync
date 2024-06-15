@@ -50,6 +50,10 @@ class Item:
             f'parent={self.parent}>'
         )
 
+    def __str__(self) -> str:
+        """Return string representation."""
+        return f'<{self.uuid} {self.name}>'
+
     @property
     def uploaded_enough(self) -> bool:
         """Return True if we're reached the upload limit."""
