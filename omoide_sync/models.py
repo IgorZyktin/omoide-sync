@@ -13,7 +13,7 @@ class User:
     name: str
     login: str
     password: str
-    root_item: UUID | None
+    root_item: UUID
 
 
 @dataclass

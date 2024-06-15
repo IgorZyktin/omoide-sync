@@ -142,9 +142,6 @@ class FileStorage(_FileStorageBase):
         """Return root item for given user."""
         # NOTE - theoretically, we should request this from the API.
         #  But currently this functionality is not supported there.
-        if user.root_item is None:
-            return None
-
         return models.Item(
             uuid=user.root_item,
             owner=user,
