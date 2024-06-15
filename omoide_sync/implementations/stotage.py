@@ -51,13 +51,17 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
     @staticmethod
     def _get_collection_setup(path: Path) -> models.Setup:
         """Load personal settings for this collection."""
-        try:
-            with open(path / const.SETUP_FILENAME, encoding='utf-8') as f:
-                raw_setup = yaml.safe_load(f)
-        except FileNotFoundError:
-            setup = models.Setup()
-        else:
-            setup = models.Setup(**raw_setup)
+        setup = models.Setup()
+
+        for filename in const.SETUP_FILENAMES:
+            try:
+                with open(path / filename, encoding='utf-8') as f:
+                    raw_setup = yaml.safe_load(f)
+            except FileNotFoundError:
+                pass
+            else:
+                setup = models.Setup(**raw_setup)
+                break
 
         return setup
 
@@ -251,7 +255,7 @@ class FileStorage(_FileStorageBase):
                 full_path = self.config.root_folder / path
 
                 unexpected = (
-                    set(full_path.iterdir()) - {const.SETUP_FILENAME}
+                    set(full_path.iterdir()) - const.SETUP_FILENAMES
                 )
 
                 if unexpected:
