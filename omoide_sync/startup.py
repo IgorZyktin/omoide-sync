@@ -22,15 +22,9 @@ def setup_logger(config: cfg.Config) -> None:
     )
 
 
-def get_client(
-    config: cfg.Config,
-    storage: interfaces.AbsStorage,
-) -> interfaces.AbsClient:
+def get_client(config: cfg.Config) -> interfaces.AbsClient:
     """Return working API client instance."""
-    return implementations.SeleniumClient(
-        config=config,
-        storage=storage,
-    )
+    return implementations.SeleniumClient(config=config)
 
 
 def get_storage_handler(config: cfg.Config) -> interfaces.AbsStorage:

@@ -14,7 +14,7 @@ def main():
 
     try:
         storage = startup.get_storage_handler(config)
-        client = startup.get_client(config, storage)
+        client = startup.get_client(config)
         logic = startup.get_logic(config, client, storage)
     except Exception:
         msg = 'Failed to initialize application'

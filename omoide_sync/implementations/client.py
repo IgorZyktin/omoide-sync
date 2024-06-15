@@ -26,14 +26,9 @@ LOG = logging.getLogger(__name__)
 class _SeleniumClientBase(interfaces.AbsClient, ABC):
     """API client."""
 
-    def __init__(
-        self,
-        config: cfg.Config,
-        storage: interfaces.AbsStorage,
-    ) -> None:
+    def __init__(self, config: cfg.Config) -> None:
         """Initialize instance."""
         self.config = config
-        self.storage = storage
         self._item_cache_by_name: dict[str, models.Item] = {}
         self._item_cache_by_uuid: dict[UUID, models.Item] = {}
         self._driver: WebDriver | None = None
