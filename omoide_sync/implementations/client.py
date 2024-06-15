@@ -29,8 +29,7 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
     def __init__(self, config: cfg.Config) -> None:
         """Initialize instance."""
         self.config = config
-        self._item_cache_by_name: dict[str, models.Item] = {}
-        self._item_cache_by_uuid: dict[UUID, models.Item] = {}
+        self._item_cache: dict[UUID, models.Item] = {}
         self._driver: WebDriver | None = None
 
     @property
@@ -74,19 +73,6 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
         msg = f'Failed to upload {item} even after {deadline} seconds'
         raise exceptions.NetworkRelatedException(msg)
 
-    def _cached(self, item: models.Item) -> models.Item | None:
-        """Try returning item from cache."""
-        cached_by_name = self._item_cache_by_name.get(item.name)
-        cached_by_uuid = self._item_cache_by_uuid.get(item.uuid)
-        cached = cached_by_name or cached_by_uuid
-        return cached
-
-    def _save_to_cache(self, item: models.Item, raw_uuid: str) -> None:
-        """Save item to our caches."""
-        item.uuid = UUID(raw_uuid)
-        self._item_cache_by_uuid[item.uuid] = item
-        self._item_cache_by_name[item.name] = item
-
     def _common_request_args(self, item: models.Item) -> dict[str, Any]:
         """Return common arguments for all requests."""
         return dict(
@@ -121,7 +107,7 @@ class SeleniumClient(_SeleniumClientBase):
 
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
-        if cached := self._cached(item):
+        if cached := self._item_cache.get(item.uuid):
             return cached
 
         payload = json.dumps({
@@ -157,7 +143,8 @@ class SeleniumClient(_SeleniumClientBase):
                 )
             raise exceptions.NetworkRelatedException(msg)
 
-        self._save_to_cache(item, r.json()['uuid'])
+        item.uuid = UUID(r.json()['uuid'])
+        self._item_cache[item.uuid] = item
 
         return item
 
@@ -170,7 +157,7 @@ class SeleniumClient(_SeleniumClientBase):
             )
             raise exceptions.ConfigRelatedException(msg)
 
-        if cached := self._cached(item):
+        if cached := self._item_cache.get(item.uuid):
             return cached
 
         if item.real_parent is None:
@@ -202,7 +189,8 @@ class SeleniumClient(_SeleniumClientBase):
             )
             raise exceptions.NetworkRelatedException(msg)
 
-        self._save_to_cache(item, r.json()['uuid'])
+        item.uuid = UUID(r.json()['uuid'])
+        self._item_cache[item.uuid] = item
 
         return item
 
