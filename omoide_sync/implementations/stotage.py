@@ -115,13 +115,21 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
                 if item:
                     collection.children.append(item)
 
-        for each in path.iterdir():
-            if each.is_dir():
-                yield from self._process_folder(
-                    user=user,
-                    path=each,
-                    parent=collection,
-                )
+        collection.children.sort(key=lambda _item: _item.name)
+
+        folders = [
+            each
+            for each in path.iterdir()
+            if each.is_dir()
+        ]
+        folders.sort(key=lambda _folder: _folder.name)
+
+        for each in folders:
+            yield from self._process_folder(
+                user=user,
+                path=each,
+                parent=collection,
+            )
 
         yield collection
 
@@ -176,7 +184,10 @@ class FileStorage(_FileStorageBase):
         """Iterate on all collections."""
         path = self.config.root_folder / user.login
 
-        for folder in path.iterdir():
+        folders = list(path.iterdir())
+        folders.sort(key=lambda _folder: _folder.name)
+
+        for folder in folders:
             if folder.is_dir() and not folder.name.startswith('_'):
                 yield from self._process_folder(user, folder, parent=None)
 
