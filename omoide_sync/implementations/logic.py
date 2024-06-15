@@ -76,10 +76,10 @@ class Logic(interfaces.AbsLogic):
 
             names.append(item.name)
 
+            self.client.create_item(item)
+
             LOG.info(
                 'Created collection %s %s',
                 ' -> '.join(names),
                 item.setup.tags,
             )
-
-            self.client.create_item(item)
