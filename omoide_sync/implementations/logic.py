@@ -54,11 +54,12 @@ class Logic(interfaces.AbsLogic):
             self.client.upload(item, paths)
             self.storage.prepare_termination(item)
 
+            item.uploaded += len(item.children)
+            if item.real_parent:
+                item.real_parent.uploaded += item.uploaded + 1
+
             for sub_item in item.children:
                 self.storage.terminate_item(sub_item)
-
-            if item.real_parent:
-                item.real_parent.uploaded += 1
 
             self.storage.terminate_collection(item)
 
