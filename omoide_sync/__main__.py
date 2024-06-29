@@ -1,5 +1,5 @@
-"""Entry point.
-"""
+"""Entry point."""
+
 import logging
 
 from omoide_sync import cfg

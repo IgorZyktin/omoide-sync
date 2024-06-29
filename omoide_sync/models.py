@@ -1,4 +1,5 @@
 """Project models."""
+
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
@@ -10,6 +11,7 @@ from uuid import UUID
 @dataclass
 class User:
     """User representation."""
+
     name: str
     login: str
     password: str
@@ -19,6 +21,7 @@ class User:
 @dataclass
 class Setup:
     """Personal settings for a collection."""
+
     termination_strategy_collection: str = 'move'
     termination_strategy_item: str = 'move'
     treat_as_collection: bool = True
@@ -33,6 +36,7 @@ class Setup:
 @dataclass
 class Item:
     """Item representation."""
+
     uuid: UUID | None
     owner: User
     name: str
@@ -60,7 +64,7 @@ class Item:
         enough = all(
             (
                 self.setup.upload_limit > 0,
-                self.uploaded >= self.setup.upload_limit
+                self.uploaded >= self.setup.upload_limit,
             )
         )
 

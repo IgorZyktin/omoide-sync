@@ -1,5 +1,5 @@
-"""HTTP client that interacts with the API.
-"""
+"""HTTP client that interacts with the API."""
+
 import abc
 
 from omoide_sync import models

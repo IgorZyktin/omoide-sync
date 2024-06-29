@@ -1,11 +1,11 @@
-"""Storage handler that can work with actual data.
-"""
+"""Storage handler that can work with actual data."""
+
+from abc import ABC
+from collections.abc import Iterator
 import logging
 import os
-import shutil
-from abc import ABC
 from pathlib import Path
-from typing import Iterator
+import shutil
 
 import yaml
 
@@ -41,13 +41,13 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
                             each.get('login') == folder_name,
                         )
                     ),
-                    bool(each.get('password'))
+                    bool(each.get('password')),
                 )
             ):
                 return models.User(**each)
 
         msg = f'Not enough auth data for user {folder_name!r}'
-        raise exceptions.UserRelatedException(msg)
+        raise exceptions.UserRelatedError(msg)
 
     @staticmethod
     def _get_collection_setup(path: Path) -> models.Setup:
@@ -117,11 +117,7 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
 
         collection.children.sort(key=lambda _item: _item.name)
 
-        folders = [
-            each
-            for each in path.iterdir()
-            if each.is_dir()
-        ]
+        folders = [each for each in path.iterdir() if each.is_dir()]
         folders.sort(key=lambda _folder: _folder.name)
 
         for each in folders:
@@ -161,7 +157,7 @@ class FileStorage(_FileStorageBase):
             uploaded=0,
             setup=self._get_collection_setup(
                 path=self.config.root_folder / user.name,
-            )
+            ),
         )
 
     def get_users(self) -> list[models.User]:
@@ -204,8 +200,10 @@ class FileStorage(_FileStorageBase):
     def prepare_termination(self, item: models.Item) -> None:
         """Create resources if need to."""
         move1 = item.setup.termination_strategy_item == const.TERMINATION_MOVE
-        move2 = (item.setup.termination_strategy_collection
-                    == const.TERMINATION_MOVE)
+        move2 = (
+            item.setup.termination_strategy_collection
+            == const.TERMINATION_MOVE
+        )
 
         if (move1 or move2) and item.setup.treat_as_collection:
             path = self._get_item_path(item)
@@ -271,8 +269,6 @@ class FileStorage(_FileStorageBase):
                     LOG.debug('Deleting %s at %s', item, full_path)
                     os.remove(full_path)
 
-        return
-
     def terminate_collection(self, item: models.Item) -> None:
         """Finish collection processing."""
         path = self._get_item_path(item)
@@ -307,11 +303,9 @@ class FileStorage(_FileStorageBase):
             case const.TERMINATION_DELETE:
                 full_path = self.config.root_folder / path
 
-                filenames = set(
-                    each.name
-                    for each in full_path.iterdir()
-                    if each.is_file()
-                )
+                filenames = {
+                    each.name for each in full_path.iterdir() if each.is_file()
+                }
 
                 unexpected_files = filenames - const.SETUP_FILENAMES
                 must_be_deleted = (
@@ -325,7 +319,7 @@ class FileStorage(_FileStorageBase):
                         f'it has additional files inside: '
                         f'{sorted(unexpected_files)}'
                     )
-                    raise exceptions.StorageRelatedException(msg)
+                    raise exceptions.StorageRelatedError(msg)
 
                 if self.config.dry_run:
                     LOG.debug(
@@ -334,7 +328,9 @@ class FileStorage(_FileStorageBase):
                         full_path,
                     )
                 else:
-                    LOG.debug('Deleting collection %s at ', item, full_path)
+                    LOG.debug(
+                        'Deleting collection %s at %s',
+                        item,
+                        full_path,
+                    )
                     shutil.rmtree(full_path)
-
-        return

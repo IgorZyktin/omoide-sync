@@ -1,10 +1,12 @@
-"""Constant values.
-"""
+"""Constant values."""
+
 LOG_FILENAME = 'omoide-sync.log'
-SETUP_FILENAMES = frozenset({
-    'setup.yaml',
-    'setup.yml',
-})
+SETUP_FILENAMES = frozenset(
+    {
+        'setup.yaml',
+        'setup.yml',
+    }
+)
 
 TERMINATION_NOTHING = 'nothing'
 TERMINATION_MOVE = 'move'

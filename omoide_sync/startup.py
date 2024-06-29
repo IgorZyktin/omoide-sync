@@ -1,5 +1,5 @@
-"""Code that prepares application for run.
-"""
+"""Code that prepares application for run."""
+
 import logging
 
 from omoide_sync import cfg
@@ -17,7 +17,7 @@ def setup_logger(config: cfg.Config) -> None:
         format='%(asctime)s - %(levelname)7s - %(name)s - %(message)s',
         handlers=[
             logging.FileHandler(log_file_path, encoding='utf-8'),
-            logging.StreamHandler()
+            logging.StreamHandler(),
         ],
     )
 

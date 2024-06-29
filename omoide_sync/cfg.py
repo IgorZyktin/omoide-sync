@@ -1,16 +1,16 @@
-"""Global configuration.
-"""
+"""Global configuration."""
+
 from pathlib import Path
 from uuid import UUID
 
-from typing_extensions import TypedDict
-
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
+from typing_extensions import TypedDict
 
 
 class RawUser(TypedDict):
     """Initial user representation."""
+
     name: str
     login: str
     root_item: UUID
@@ -19,6 +19,7 @@ class RawUser(TypedDict):
 
 class Config(BaseSettings):
     """Global configuration."""
+
     url: str
     driver: str
     auth_data: list[RawUser]

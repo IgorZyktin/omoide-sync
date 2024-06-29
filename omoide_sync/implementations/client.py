@@ -1,17 +1,17 @@
-"""HTTP client that interacts with the API.
-"""
+"""HTTP client that interacts with the API."""
+
+from abc import ABC
 import datetime
 import http
 import json
 import logging
 import time
-from abc import ABC
 from typing import Any
 from uuid import UUID
 
 import requests
-import selenium.common.exceptions
 from selenium import webdriver
+import selenium.common.exceptions
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -37,7 +37,7 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
         """Return driver instance."""
         if self._driver is None:
             msg = 'Selenium driver is not initialized'
-            raise exceptions.ConfigRelatedException(msg)
+            raise exceptions.ConfigRelatedError(msg)
         return self._driver
 
     def _make_auth_url(self, item: models.Item) -> str:
@@ -54,10 +54,11 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
 
     def _wait_for_upload(self, item: models.Item, timeout: int) -> None:
         """Wait for uploading to complete."""
-        deadline = datetime.datetime.now() + datetime.timedelta(
-            seconds=timeout)
+        deadline = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) + datetime.timedelta(seconds=timeout)
 
-        while datetime.datetime.now() < deadline:
+        while datetime.datetime.now(tz=datetime.timezone.utc) < deadline:
             try:
                 self.driver.find_element(
                     'xpath',
@@ -71,20 +72,20 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
                 return
 
         msg = f'Failed to upload {item} even after {deadline} seconds'
-        raise exceptions.NetworkRelatedException(msg)
+        raise exceptions.NetworkRelatedError(msg)
 
     def _common_request_args(self, item: models.Item) -> dict[str, Any]:
         """Return common arguments for all requests."""
-        return dict(
-            headers={
+        return {
+            'headers': {
                 'Content-Type': 'application/json; charset=UTF-8',
             },
-            auth=(
+            'auth': (
                 item.owner.login,
                 item.owner.password,
             ),
-            timeout=self.config.request_timeout,
-        )
+            'timeout': self.config.request_timeout,
+        }
 
 
 class SeleniumClient(_SeleniumClientBase):
@@ -110,18 +111,21 @@ class SeleniumClient(_SeleniumClientBase):
         if cached := self._item_cache.get(item.uuid):
             return cached
 
-        payload = json.dumps({
-            'name': item.name,
-        }, ensure_ascii=False)
+        payload = json.dumps(
+            {
+                'name': item.name,
+            },
+            ensure_ascii=False,
+        )
 
         if item.uuid:
-            r = requests.get(
+            r = requests.get(  # noqa: S113
                 f'{self.config.url}/api/items/{item.uuid}',
                 **self._common_request_args(item),
             )
 
         else:
-            r = requests.get(
+            r = requests.get(  # noqa: S113
                 f'{self.config.url}/api/items/by-name',
                 data=payload.encode('utf-8'),
                 **self._common_request_args(item),
@@ -133,15 +137,14 @@ class SeleniumClient(_SeleniumClientBase):
         if r.status_code != http.HTTPStatus.OK:
             if item.uuid:
                 msg = (
-                    f'Failed to get item {item}: '
-                    f'{r.status_code} {r.text}'
+                    f'Failed to get item {item}: ' f'{r.status_code} {r.text}'
                 )
             else:
                 msg = (
                     f'Failed to get item by name {item}: '
                     f'{r.status_code} {r.text}, payload {payload}'
                 )
-            raise exceptions.NetworkRelatedException(msg)
+            raise exceptions.NetworkRelatedError(msg)
 
         item.uuid = UUID(r.json()['uuid'])
         self._item_cache[item.uuid] = item
@@ -155,7 +158,7 @@ class SeleniumClient(_SeleniumClientBase):
                 f'Item {item} is not treated as a collection '
                 f'and is not supposed to be created on the backend'
             )
-            raise exceptions.ConfigRelatedException(msg)
+            raise exceptions.ConfigRelatedError(msg)
 
         if cached := self._item_cache.get(item.uuid):
             return cached
@@ -167,16 +170,19 @@ class SeleniumClient(_SeleniumClientBase):
                 str(item.real_parent.uuid) if item.real_parent.uuid else None
             )
 
-        payload = json.dumps({
-            'uuid': None,
-            'parent_uuid': parent_uuid,
-            'name': item.name,
-            'is_collection': item.is_collection,
-            'tags': item.setup.tags,
-            'permissions': [],
-        }, ensure_ascii=False)
+        payload = json.dumps(
+            {
+                'uuid': None,
+                'parent_uuid': parent_uuid,
+                'name': item.name,
+                'is_collection': item.is_collection,
+                'tags': item.setup.tags,
+                'permissions': [],
+            },
+            ensure_ascii=False,
+        )
 
-        r = requests.post(
+        r = requests.post(  # noqa: S113
             f'{self.config.url}/api/items',
             data=payload.encode('utf-8'),
             **self._common_request_args(item),
@@ -187,7 +193,7 @@ class SeleniumClient(_SeleniumClientBase):
                 f'Failed to create item {item}: '
                 f'{r.status_code} {r.text!r}, payload: {payload}'
             )
-            raise exceptions.NetworkRelatedException(msg)
+            raise exceptions.NetworkRelatedError(msg)
 
         item.uuid = UUID(r.json()['uuid'])
         self._item_cache[item.uuid] = item
@@ -203,20 +209,32 @@ class SeleniumClient(_SeleniumClientBase):
         if item.setup.treat_as_collection:
             upload_url = f'{self.config.url}/upload/{item.uuid}'
             LOG.info(
-                f'Uploading children of {item} using url '
-                f'{upload_url} with {len(item.children)} items'
+                'Uploading children of %(item)s using url '
+                '%(url)s with %(total)s items',
+                {
+                    'item': item,
+                    'parent': item.real_parent,
+                    'url': upload_url,
+                    'total': len(item.children),
+                },
             )
         else:
             upload_url = f'{self.config.url}/upload/{item.real_parent.uuid}'
             LOG.info(
-                f'Uploading children of {item} '
-                f'as a proxy for {item.real_parent} '
-                f'using url {upload_url} with {len(item.children)} items'
+                'Uploading children of %(item)s '
+                'as a proxy for %(parent)s '
+                'using url %(url)s with %(total)s items',
+                {
+                    'item': item,
+                    'parent': item.real_parent,
+                    'url': upload_url,
+                    'total': len(item.children),
+                },
             )
 
         self.driver.get(upload_url)
 
-        js_code = "arguments[0].scrollIntoView();"
+        js_code = 'arguments[0].scrollIntoView();'
 
         # turning on simplified upload
         time.sleep(self.config.wait_for_page_load)

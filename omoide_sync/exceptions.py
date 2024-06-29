@@ -1,22 +1,21 @@
-"""Custom exceptions for the project.
-"""
+"""Custom exceptions for the project."""
 
 
-class OmoideSyncException(Exception):
+class OmoideSyncError(Exception):
     """General base class for all exceptions."""
 
 
-class ConfigRelatedException(OmoideSyncException):
+class ConfigRelatedError(OmoideSyncError):
     """Got problem with config."""
 
 
-class UserRelatedException(OmoideSyncException):
+class UserRelatedError(OmoideSyncError):
     """Got problem with user."""
 
 
-class StorageRelatedException(OmoideSyncException):
+class StorageRelatedError(OmoideSyncError):
     """Got problem with storage."""
 
 
-class NetworkRelatedException(OmoideSyncException):
+class NetworkRelatedError(OmoideSyncError):
     """Got problem with network or remote APIs."""

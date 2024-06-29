@@ -1,5 +1,5 @@
-"""Service logic.
-"""
+"""Service logic."""
+
 import logging
 
 from omoide_sync import cfg

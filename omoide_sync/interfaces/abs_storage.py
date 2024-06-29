@@ -1,7 +1,7 @@
-"""Storage handler that can work with actual data.
-"""
+"""Storage handler that can work with actual data."""
+
 import abc
-from typing import Iterator
+from collections.abc import Iterator
 
 from omoide_sync import models
 

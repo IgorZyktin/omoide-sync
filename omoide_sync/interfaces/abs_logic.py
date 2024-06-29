@@ -1,5 +1,5 @@
-"""Service logic.
-"""
+"""Service logic."""
+
 import abc
 
 from omoide_sync import models
