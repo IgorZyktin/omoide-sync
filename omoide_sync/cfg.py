@@ -24,7 +24,7 @@ class Config(BaseSettings):
     driver: str
     auth_data: list[RawUser]
     root_folder: Path
-    trash_folder: Path | None = None
+    trash_folder: Path
     dry_run: bool = False
     log_level: str = 'INFO'
     supported_formats: set[str] = {

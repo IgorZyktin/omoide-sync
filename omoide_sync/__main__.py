@@ -6,7 +6,7 @@ from omoide_sync import cfg
 from omoide_sync import startup
 
 
-def main():
+def main() -> None:
     """Entry point."""
     config = cfg.get_config()
     startup.setup_logger(config)

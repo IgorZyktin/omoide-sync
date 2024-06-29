@@ -108,8 +108,9 @@ class SeleniumClient(_SeleniumClientBase):
 
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
-        if cached := self._item_cache.get(item.uuid):
-            return cached
+        if item.uuid:
+            if cached := self._item_cache.get(item.uuid):
+                return cached
 
         payload = json.dumps(
             {
@@ -160,9 +161,11 @@ class SeleniumClient(_SeleniumClientBase):
             )
             raise exceptions.ConfigRelatedError(msg)
 
-        if cached := self._item_cache.get(item.uuid):
-            return cached
+        if item.uuid:
+            if cached := self._item_cache.get(item.uuid):
+                return cached
 
+        parent_uuid: str | None
         if item.real_parent is None:
             parent_uuid = str(item.owner.root_item)
         else:
@@ -200,7 +203,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         return item
 
-    def upload(self, item: models.Item, paths: dict[str, str]):
+    def upload(self, item: models.Item, paths: dict[str, str]) -> None:
         """Crete Item in the API."""
         # logging in
         auth_url = self._make_auth_url(item)
@@ -218,7 +221,7 @@ class SeleniumClient(_SeleniumClientBase):
                     'total': len(item.children),
                 },
             )
-        else:
+        elif item.real_parent and item.real_parent.uuid:
             upload_url = f'{self.config.url}/upload/{item.real_parent.uuid}'
             LOG.info(
                 'Uploading children of %(item)s '
@@ -231,6 +234,17 @@ class SeleniumClient(_SeleniumClientBase):
                     'total': len(item.children),
                 },
             )
+        else:
+            LOG.error(
+                'Failed to find parent to upload: item %(item_uuid)s, '
+                'real parent is %(parent)s',
+                {
+                    'item': item,
+                    'parent': item.real_parent,
+                },
+            )
+            msg = f'Item {item} has no real parent: {item.real_parent}'
+            raise exceptions.OmoideSyncError(msg)
 
         self.driver.get(upload_url)
 
