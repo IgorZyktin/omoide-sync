@@ -108,9 +108,8 @@ class SeleniumClient(_SeleniumClientBase):
 
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
-        if item.uuid:
-            if cached := self._item_cache.get(item.uuid):
-                return cached
+        if item.uuid and (cached := self._item_cache.get(item.uuid)):
+            return cached
 
         payload = json.dumps(
             {
@@ -161,9 +160,8 @@ class SeleniumClient(_SeleniumClientBase):
             )
             raise exceptions.ConfigRelatedError(msg)
 
-        if item.uuid:
-            if cached := self._item_cache.get(item.uuid):
-                return cached
+        if item.uuid and (cached := self._item_cache.get(item.uuid)):
+            return cached
 
         parent_uuid: str | None
         if item.real_parent is None:
