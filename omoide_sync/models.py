@@ -9,13 +9,23 @@ from uuid import UUID
 
 
 @dataclass
-class User:
+class RawUser:
     """User representation."""
 
     name: str
     login: str
     password: str
-    root_item: UUID
+
+
+@dataclass
+class User:
+    """User representation."""
+
+    uuid: UUID
+    name: str
+    login: str
+    password: str
+    root_item: UUID | None
 
 
 @dataclass

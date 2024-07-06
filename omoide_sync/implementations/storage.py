@@ -28,23 +28,17 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         """Initialize instance."""
         self.config = config
 
-    def _find_matching_user(self, folder_name: str) -> models.User:
+    def _find_matching_user(self, folder_name: str) -> models.RawUser:
         """Scan through auth data."""
         for each in self.config.auth_data:
-            # TODO - here we could get collision between login and name
-            #  better try to log in as user first and proceed only after that
             if all(
                 (
-                    any(
-                        (
-                            each.get('name') == folder_name,
-                            each.get('login') == folder_name,
-                        )
-                    ),
+                    bool(each.get('name')),
                     bool(each.get('password')),
+                    each.get('login') == folder_name,
                 )
             ):
-                return models.User(**each)
+                return models.RawUser(**each)
 
         msg = f'Not enough auth data for user {folder_name!r}'
         raise exceptions.UserRelatedError(msg)
@@ -160,9 +154,9 @@ class FileStorage(_FileStorageBase):
             ),
         )
 
-    def get_users(self) -> list[models.User]:
+    def get_raw_users(self) -> list[models.RawUser]:
         """Return list of users."""
-        users: list[models.User] = []
+        users: list[models.RawUser] = []
 
         for folder in self.config.root_folder.iterdir():
             if folder.is_file():

@@ -17,6 +17,10 @@ class AbsClient(abc.ABC):
         """Finish work."""
 
     @abc.abstractmethod
+    def get_user(self, raw_user: models.RawUser) -> models.User:
+        """Return User from the API."""
+
+    @abc.abstractmethod
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
 

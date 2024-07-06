@@ -14,7 +14,7 @@ class AbsStorage(abc.ABC):
         """Return root item for given user."""
 
     @abc.abstractmethod
-    def get_users(self) -> list[models.User]:
+    def get_raw_users(self) -> list[models.RawUser]:
         """Return list of users."""
 
     @abc.abstractmethod

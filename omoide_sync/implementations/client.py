@@ -23,6 +23,9 @@ from omoide_sync import models
 LOG = logging.getLogger(__name__)
 
 
+API_USERS_ENDPOINT = '/api-new/v1/users'
+
+
 class _SeleniumClientBase(interfaces.AbsClient, ABC):
     """API client."""
 
@@ -74,15 +77,19 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
         msg = f'Failed to upload {item} even after {deadline} seconds'
         raise exceptions.NetworkRelatedError(msg)
 
-    def _common_request_args(self, item: models.Item) -> dict[str, Any]:
+    def _common_request_args(
+        self,
+        login: str,
+        password: str,
+    ) -> dict[str, Any]:
         """Return common arguments for all requests."""
         return {
             'headers': {
                 'Content-Type': 'application/json; charset=UTF-8',
             },
             'auth': (
-                item.owner.login,
-                item.owner.password,
+                login,
+                password,
             ),
             'timeout': self.config.request_timeout,
         }
@@ -106,6 +113,42 @@ class SeleniumClient(_SeleniumClientBase):
         self.driver.close()
         self.driver.quit()
 
+    def get_user(self, raw_user: models.RawUser) -> models.User:
+        """Return User from the API."""
+        url = self.config.url.rstrip('/') + API_USERS_ENDPOINT
+
+        r = requests.get(  # noqa: S113
+            url,
+            **self._common_request_args(
+                login=raw_user.login,
+                password=raw_user.password,
+            ),
+        )
+
+        r.raise_for_status()
+        body = r.json()
+
+        if not body or not body.get('users'):
+            msg = f'User {raw_user.name} does not exist'
+            raise exceptions.NetworkRelatedError(msg)
+
+        try:
+            user_dict = body['users'][0]
+            user = models.User(
+                uuid=UUID(user_dict['uuid']),
+                name=user_dict['name'],
+                login=raw_user.login,
+                password=raw_user.password,
+                root_item=user_dict['extra']['root_item'],
+            )
+        except Exception:
+            LOG.exception('Failed to parse API response '
+                          'after requesting user info, got body %s', body)
+            raise exceptions.NetworkRelatedError(
+                'Failed to parse API response after requesting user info')
+
+        return user
+
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
         if item.uuid and (cached := self._item_cache.get(item.uuid)):
@@ -121,14 +164,20 @@ class SeleniumClient(_SeleniumClientBase):
         if item.uuid:
             r = requests.get(  # noqa: S113
                 f'{self.config.url}/api/items/{item.uuid}',
-                **self._common_request_args(item),
+                **self._common_request_args(
+                    login=item.owner.login,
+                    password=item.owner.password,
+                ),
             )
 
         else:
             r = requests.get(  # noqa: S113
                 f'{self.config.url}/api/items/by-name',
                 data=payload.encode('utf-8'),
-                **self._common_request_args(item),
+                **self._common_request_args(
+                    login=item.owner.login,
+                    password=item.owner.password,
+                ),
             )
 
         if r.status_code == http.HTTPStatus.NOT_FOUND:
@@ -186,7 +235,10 @@ class SeleniumClient(_SeleniumClientBase):
         r = requests.post(  # noqa: S113
             f'{self.config.url}/api/items',
             data=payload.encode('utf-8'),
-            **self._common_request_args(item),
+            **self._common_request_args(
+                login=item.owner.login,
+                password=item.owner.password,
+            ),
         )
 
         if r.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED):

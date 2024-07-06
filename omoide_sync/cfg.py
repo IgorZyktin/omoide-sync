@@ -1,7 +1,6 @@
 """Global configuration."""
 
 from pathlib import Path
-from uuid import UUID
 
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
@@ -13,7 +12,6 @@ class RawUser(TypedDict):
 
     name: str
     login: str
-    root_item: UUID
     password: str
 
 
