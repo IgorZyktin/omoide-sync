@@ -149,6 +149,7 @@ class SeleniumClient(_SeleniumClientBase):
 
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
+        LOG.info('Getting item {}', item)
         if item.uuid and (cached := self._item_cache.get(item.uuid)):
             return cached
 
@@ -156,6 +157,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         payload = json.dumps(
             {
+                'owner_uuid': item.owner.uuid,
                 'name': item.name,
             },
             ensure_ascii=False,
@@ -169,7 +171,7 @@ class SeleniumClient(_SeleniumClientBase):
                     password=item.owner.password,
                 ),
             )
-            response = 'one'
+            cardinality = 'one'
 
         else:
             r = requests.get(  # noqa: S113
@@ -184,7 +186,7 @@ class SeleniumClient(_SeleniumClientBase):
                     password=item.owner.password,
                 ),
             )
-            response = 'many'
+            cardinality = 'many'
 
         if r.status_code == http.HTTPStatus.NOT_FOUND:
             return None
@@ -201,7 +203,10 @@ class SeleniumClient(_SeleniumClientBase):
                 )
             raise exceptions.NetworkRelatedError(msg)
 
-        if response == 'one':
+        response = r.json()
+        LOG.info('Got response {}', response)
+
+        if cardinality == 'one':
             item.uuid = UUID(r.json()['item']['uuid'])
         else:
             items = r.json()['items']
