@@ -1,17 +1,17 @@
 """HTTP client that interacts with the API."""
 
-from abc import ABC
 import datetime
 import http
 import json
-import logging
 import time
+from abc import ABC
 from typing import Any
 from uuid import UUID
 
 import requests
-from selenium import webdriver
 import selenium.common.exceptions
+from loguru import logger as LOG
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -19,9 +19,6 @@ from omoide_sync import cfg
 from omoide_sync import exceptions
 from omoide_sync import interfaces
 from omoide_sync import models
-
-LOG = logging.getLogger(__name__)
-
 
 API_USERS_ENDPOINT = '/api-new/v1/users'
 API_ITEMS_ENDPOINT = '/api-new/v1/items'

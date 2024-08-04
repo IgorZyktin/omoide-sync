@@ -1,12 +1,10 @@
 """Service logic."""
 
-import logging
+from loguru import logger as LOG
 
 from omoide_sync import cfg
 from omoide_sync import interfaces
 from omoide_sync import models
-
-LOG = logging.getLogger(__name__)
 
 
 class Logic(interfaces.AbsLogic):
@@ -78,12 +76,14 @@ class Logic(interfaces.AbsLogic):
                     else:
                         # newly created
                         names.append(f'!!!{ancestor.name}!!!')
-                        self.client.create_item(ancestor)
+                        with LOG.catch(Exception, reraise=True):
+                            self.client.create_item(ancestor)
                 else:
                     # not a collection
                     names.append(f'???{ancestor.name}???')
 
             if not self.client.get_item(item):
-                self.client.create_item(item)
-                names.append(f'!!!{item.name}!!!')
-                LOG.info('Created collection %s', ' -> '.join(names))
+                with LOG.catch(Exception, reraise=True):
+                    self.client.create_item(item)
+                    names.append(f'!!!{item.name}!!!')
+                    LOG.info('Created collection %s', ' -> '.join(names))
