@@ -155,14 +155,6 @@ class SeleniumClient(_SeleniumClientBase):
 
         url = self.config.url.rstrip('/') + API_ITEMS_ENDPOINT
 
-        payload = json.dumps(
-            {
-                'owner_uuid': item.owner.uuid,
-                'name': item.name,
-            },
-            ensure_ascii=False,
-        )
-
         if item.uuid:
             r = requests.get(  # noqa: S113
                 f'{url}/{item.uuid}',
@@ -176,10 +168,9 @@ class SeleniumClient(_SeleniumClientBase):
         else:
             r = requests.get(  # noqa: S113
                 url,
-                data=payload.encode('utf-8'),
                 params={
                     'name': item.name,
-                    'parent_uuid': item.owner.uuid,
+                    'parent_uuid': str(item.owner.uuid),
                 },
                 **self._common_request_args(
                     login=item.owner.login,
