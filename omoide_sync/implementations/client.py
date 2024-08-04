@@ -24,6 +24,7 @@ LOG = logging.getLogger(__name__)
 
 
 API_USERS_ENDPOINT = '/api-new/v1/users'
+API_ITEMS_ENDPOINT = '/api-new/v1/items'
 
 
 class _SeleniumClientBase(interfaces.AbsClient, ABC):
@@ -154,6 +155,8 @@ class SeleniumClient(_SeleniumClientBase):
         if item.uuid and (cached := self._item_cache.get(item.uuid)):
             return cached
 
+        url = self.config.url.rstrip('/') + API_ITEMS_ENDPOINT
+
         payload = json.dumps(
             {
                 'name': item.name,
@@ -163,22 +166,28 @@ class SeleniumClient(_SeleniumClientBase):
 
         if item.uuid:
             r = requests.get(  # noqa: S113
-                f'{self.config.url}/api/items/{item.uuid}',
+                f'{url}/{item.uuid}',
                 **self._common_request_args(
                     login=item.owner.login,
                     password=item.owner.password,
                 ),
             )
+            response = 'one'
 
         else:
             r = requests.get(  # noqa: S113
-                f'{self.config.url}/api/items/by-name',
+                url,
                 data=payload.encode('utf-8'),
+                params={
+                    'name': item.name,
+                    'parent_uuid': item.owner.uuid,
+                },
                 **self._common_request_args(
                     login=item.owner.login,
                     password=item.owner.password,
                 ),
             )
+            response = 'many'
 
         if r.status_code == http.HTTPStatus.NOT_FOUND:
             return None
@@ -195,7 +204,20 @@ class SeleniumClient(_SeleniumClientBase):
                 )
             raise exceptions.NetworkRelatedError(msg)
 
-        item.uuid = UUID(r.json()['uuid'])
+        if response == 'one':
+            item.uuid = UUID(r.json()['item']['uuid'])
+        else:
+            items = r.json()['items']
+
+            if not items:
+                return None
+
+            if len(items) > 1:
+                msg = f'Got more than one item: {items}'
+                raise exceptions.NetworkRelatedError(msg)
+
+            item.uuid = items[0]['uuid']
+
         self._item_cache[item.uuid] = item
 
         return item
