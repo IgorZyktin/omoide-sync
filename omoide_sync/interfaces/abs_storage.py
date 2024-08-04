@@ -10,10 +10,6 @@ class AbsStorage(abc.ABC):
     """Abstract storage handler."""
 
     @abc.abstractmethod
-    def get_root_item(self, user: models.User) -> models.Item | None:
-        """Return root item for given user."""
-
-    @abc.abstractmethod
     def get_raw_users(self) -> list[models.RawUser]:
         """Return list of users."""
 

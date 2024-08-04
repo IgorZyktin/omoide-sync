@@ -137,23 +137,6 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
 class FileStorage(_FileStorageBase):
     """File storage handler."""
 
-    def get_root_item(self, user: models.User) -> models.Item | None:
-        """Return root item for given user."""
-        # TODO - we should request this info from the API.
-        #  But currently this functionality is not supported there.
-        return models.Item(
-            uuid=user.root_item,
-            owner=user,
-            name=user.name,
-            parent=None,
-            children=[],
-            is_collection=True,
-            uploaded=0,
-            setup=self._get_collection_setup(
-                path=self.config.root_folder / user.name,
-            ),
-        )
-
     def get_raw_users(self) -> list[models.RawUser]:
         """Return list of users."""
         users: list[models.RawUser] = []

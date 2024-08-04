@@ -140,7 +140,7 @@ class SeleniumClient(_SeleniumClientBase):
                 name=user_dict['name'],
                 login=raw_user.login,
                 password=raw_user.password,
-                root_item=user_dict['extra']['root_item'],
+                root_item=user_dict['extras']['root_item'],
             )
         except Exception:
             LOG.exception('Failed to parse API response '
