@@ -72,6 +72,20 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
                 LOG.info('Done uploading {}', item)
                 return
 
+            try:
+                elem = self.driver.find_element(
+                    'xpath',
+                    '//div[@class="notification om-alert"]',
+                )
+            except selenium.common.exceptions.NoSuchElementException:
+                pass
+            else:
+                LOG.error(
+                    'Got error in element {}',
+                    elem.get_attribute('innerHTML'),
+                )
+                return
+
         msg = f'Failed to upload {item} even after {deadline} seconds'
         raise exceptions.NetworkRelatedError(msg)
 
