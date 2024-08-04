@@ -244,8 +244,8 @@ class SeleniumClient(_SeleniumClientBase):
 
         payload = json.dumps(
             {
-                'uuid': None,
                 'parent_uuid': parent_uuid,
+                'owner_uuid': str(item.owner.uuid),
                 'name': item.name,
                 'is_collection': item.is_collection,
                 'tags': item.setup.tags,
@@ -254,8 +254,10 @@ class SeleniumClient(_SeleniumClientBase):
             ensure_ascii=False,
         )
 
+        url = self.config.url.rstrip('/') + API_ITEMS_ENDPOINT
+
         r = requests.post(  # noqa: S113
-            f'{self.config.url}/api/items',
+            url=url,
             data=payload.encode('utf-8'),
             **self._common_request_args(
                 login=item.owner.login,
@@ -270,7 +272,7 @@ class SeleniumClient(_SeleniumClientBase):
             )
             raise exceptions.NetworkRelatedError(msg)
 
-        item.uuid = UUID(r.json()['uuid'])
+        item.uuid = UUID(r.json()['item']['uuid'])
         self._item_cache[item.uuid] = item
 
         return item
