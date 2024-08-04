@@ -282,36 +282,20 @@ class SeleniumClient(_SeleniumClientBase):
         if item.setup.treat_as_collection:
             upload_url = f'{self.config.url}/upload/{item.uuid}'
             LOG.info(
-                'Uploading children of {item} using url '
-                '{url} with {total} items',
-                {
-                    'item': item,
-                    'parent': item.real_parent,
-                    'url': upload_url,
-                    'total': len(item.children),
-                },
+                f'Uploading children of {item} using url '
+                f'{upload_url} with {len(item.children)} items'
             )
         elif item.real_parent and item.real_parent.uuid:
             upload_url = f'{self.config.url}/upload/{item.real_parent.uuid}'
             LOG.info(
-                'Uploading children of {item} '
-                'as a proxy for {parent} '
-                'using url {url} with {total} items',
-                {
-                    'item': item,
-                    'parent': item.real_parent,
-                    'url': upload_url,
-                    'total': len(item.children),
-                },
+                f'Uploading children of {item} '
+                f'as a proxy for {item.real_parent} '
+                f'using url {upload_url} with {len(item.children)} items'
             )
         else:
             LOG.error(
-                'Failed to find parent to upload: item {item_uuid}, '
-                'real parent is {parent}',
-                {
-                    'item': item,
-                    'parent': item.real_parent,
-                },
+                f'Failed to find parent to upload: item {item}, '
+                f'real parent is {item.real_parent}',
             )
             msg = f'Item {item} has no real parent: {item.real_parent}'
             raise exceptions.OmoideSyncError(msg)
