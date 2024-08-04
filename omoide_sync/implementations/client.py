@@ -66,10 +66,10 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
                     '//span[text()="Ready for new batch"]',
                 )
             except selenium.common.exceptions.NoSuchElementException:
-                LOG.info('Still waiting %s to upload', item)
+                LOG.info('Still waiting {} to upload', item)
                 time.sleep(self.config.wait_step_for_upload)
             else:
-                LOG.info('Done uploading %s', item)
+                LOG.info('Done uploading {}', item)
                 return
 
         msg = f'Failed to upload {item} even after {deadline} seconds'
@@ -141,7 +141,7 @@ class SeleniumClient(_SeleniumClientBase):
             )
         except Exception:
             LOG.exception('Failed to parse API response '
-                          'after requesting user info, got body %s', body)
+                          'after requesting user info, got body {}', body)
             raise exceptions.NetworkRelatedError(
                 'Failed to parse API response after requesting user info')
 
@@ -149,7 +149,8 @@ class SeleniumClient(_SeleniumClientBase):
 
     def get_item(self, item: models.Item) -> models.Item | None:
         """Return Item from the API."""
-        LOG.info('Getting item {}', item)
+        LOG.info('Getting item {} for {}', item, item.owner)
+
         if item.uuid and (cached := self._item_cache.get(item.uuid)):
             return cached
 
@@ -190,7 +191,7 @@ class SeleniumClient(_SeleniumClientBase):
             else:
                 msg = (
                     f'Failed to get item by name {item}: '
-                    f'{r.status_code} {r.text}, payload {payload}'
+                    f'{r.status_code} {r.text}'
                 )
             raise exceptions.NetworkRelatedError(msg)
 
@@ -217,6 +218,8 @@ class SeleniumClient(_SeleniumClientBase):
 
     def create_item(self, item: models.Item) -> models.Item:
         """Crete Item in the API."""
+        LOG.info('Creating item {} for {}', item, item.owner)
+
         if not item.setup.treat_as_collection:
             msg = (
                 f'Item {item} is not treated as a collection '
@@ -279,8 +282,8 @@ class SeleniumClient(_SeleniumClientBase):
         if item.setup.treat_as_collection:
             upload_url = f'{self.config.url}/upload/{item.uuid}'
             LOG.info(
-                'Uploading children of %(item)s using url '
-                '%(url)s with %(total)s items',
+                'Uploading children of {item} using url '
+                '{url} with {total} items',
                 {
                     'item': item,
                     'parent': item.real_parent,
@@ -291,9 +294,9 @@ class SeleniumClient(_SeleniumClientBase):
         elif item.real_parent and item.real_parent.uuid:
             upload_url = f'{self.config.url}/upload/{item.real_parent.uuid}'
             LOG.info(
-                'Uploading children of %(item)s '
-                'as a proxy for %(parent)s '
-                'using url %(url)s with %(total)s items',
+                'Uploading children of {item} '
+                'as a proxy for {parent} '
+                'using url {url} with {total} items',
                 {
                     'item': item,
                     'parent': item.real_parent,
@@ -303,8 +306,8 @@ class SeleniumClient(_SeleniumClientBase):
             )
         else:
             LOG.error(
-                'Failed to find parent to upload: item %(item_uuid)s, '
-                'real parent is %(parent)s',
+                'Failed to find parent to upload: item {item_uuid}, '
+                'real parent is {parent}',
                 {
                     'item': item,
                     'parent': item.real_parent,

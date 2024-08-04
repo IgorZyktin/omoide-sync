@@ -25,14 +25,14 @@ class Logic(interfaces.AbsLogic):
         """Start processing."""
         raw_users = self.storage.get_raw_users()
 
-        LOG.info('Got users %s', [user.name for user in raw_users])
+        LOG.info('Got users {}', [user.name for user in raw_users])
 
         try:
             self.client.start()
 
             for raw_user in raw_users:
                 user = self.client.get_user(raw_user)
-                LOG.debug('Working with user %s %s', user.uuid, user.name)
+                LOG.debug('Working with user {} {}', user.uuid, user.name)
                 self.process_single_user(user)
         finally:
             self.client.stop()
@@ -43,7 +43,7 @@ class Logic(interfaces.AbsLogic):
             if not self.client.get_item(item):
                 self.create_chain(item)
 
-            LOG.debug('Processing collection %s', item)
+            LOG.debug('Processing collection {}', item)
 
             if item.uploaded_enough:
                 continue
@@ -86,4 +86,4 @@ class Logic(interfaces.AbsLogic):
                 with LOG.catch(Exception, reraise=True):
                     self.client.create_item(item)
                     names.append(f'!!!{item.name}!!!')
-                    LOG.info('Created collection %s', ' -> '.join(names))
+                    LOG.info('Created collection {}', ' -> '.join(names))

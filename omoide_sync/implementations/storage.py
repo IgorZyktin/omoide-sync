@@ -190,7 +190,7 @@ class FileStorage(_FileStorageBase):
             if self.config.dry_run:
                 LOG.debug(
                     'Supposed to copy folder tree because '
-                    'of collection %s from %s to %s',
+                    'of collection {} from {} to {}',
                     item,
                     source_path,
                     dest_path,
@@ -198,7 +198,7 @@ class FileStorage(_FileStorageBase):
             else:
                 LOG.debug(
                     'Copying folder tree because '
-                    'of collection %s from %s to %s',
+                    'of collection {} from {} to {}',
                     item,
                     source_path,
                     dest_path,
@@ -220,14 +220,14 @@ class FileStorage(_FileStorageBase):
 
                 if self.config.dry_run:
                     LOG.debug(
-                        'Supposed to move item %s from %s to %s',
+                        'Supposed to move item {} from {} to {}',
                         item,
                         source_path,
                         dest_path,
                     )
                 else:
                     LOG.debug(
-                        'Moving item %s from %s to %s',
+                        'Moving item {} from {} to {}',
                         item,
                         source_path,
                         dest_path,
@@ -241,9 +241,9 @@ class FileStorage(_FileStorageBase):
                 full_path = self.config.root_folder / path
 
                 if self.config.dry_run:
-                    LOG.debug('Supposed to delete %s at %s', item, full_path)
+                    LOG.debug('Supposed to delete {} at {}', item, full_path)
                 else:
-                    LOG.debug('Deleting %s at %s', item, full_path)
+                    LOG.debug('Deleting {} at {}', item, full_path)
                     os.remove(full_path)
 
     def terminate_collection(self, item: models.Item) -> None:
@@ -257,14 +257,14 @@ class FileStorage(_FileStorageBase):
 
                 if self.config.dry_run:
                     LOG.debug(
-                        'Supposed to move collection %s from %s to %s',
+                        'Supposed to move collection {} from {} to {}',
                         item,
                         source_path,
                         dest_path,
                     )
                 else:
                     LOG.debug(
-                        'Moving collection %s from %s to %s',
+                        'Moving collection {} from {} to {}',
                         item,
                         source_path,
                         dest_path,
@@ -300,13 +300,13 @@ class FileStorage(_FileStorageBase):
 
                 if self.config.dry_run:
                     LOG.debug(
-                        'Supposed to delete collection %s at %s',
+                        'Supposed to delete collection {} at {}',
                         item,
                         full_path,
                     )
                 else:
                     LOG.debug(
-                        'Deleting collection %s at %s',
+                        'Deleting collection {} at {}',
                         item,
                         full_path,
                     )
