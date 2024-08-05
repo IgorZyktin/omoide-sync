@@ -1,21 +1,19 @@
 """Storage handler that can work with actual data."""
 
+import os
+import shutil
 from abc import ABC
 from collections.abc import Iterator
-import logging
-import os
 from pathlib import Path
-import shutil
 
 import yaml
+from loguru import logger as LOG
 
 from omoide_sync import cfg
 from omoide_sync import const
 from omoide_sync import exceptions
 from omoide_sync import interfaces
 from omoide_sync import models
-
-LOG = logging.getLogger(__name__)
 
 
 class _FileStorageBase(interfaces.AbsStorage, ABC):

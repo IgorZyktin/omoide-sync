@@ -185,7 +185,7 @@ class SeleniumClient(_SeleniumClientBase):
                 url,
                 params={
                     'name': item.name,
-                    'parent_uuid': str(item.owner.uuid),
+                    'owner_uuid': str(item.owner.uuid),
                 },
                 **self._common_request_args(
                     login=item.owner.login,
