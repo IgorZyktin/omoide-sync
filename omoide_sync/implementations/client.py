@@ -20,8 +20,8 @@ from omoide_sync import exceptions
 from omoide_sync import interfaces
 from omoide_sync import models
 
-API_USERS_ENDPOINT = '/api-new/v1/users'
-API_ITEMS_ENDPOINT = '/api-new/v1/items'
+API_USERS_ENDPOINT = '/api/v1/users'
+API_ITEMS_ENDPOINT = '/api/v1/items'
 
 
 class _SeleniumClientBase(interfaces.AbsClient, ABC):
