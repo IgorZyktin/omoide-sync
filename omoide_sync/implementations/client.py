@@ -151,7 +151,7 @@ class SeleniumClient(_SeleniumClientBase):
                 name=user_dict['name'],
                 login=raw_user.login,
                 password=raw_user.password,
-                root_item=user_dict['extras']['root_item'],
+                root_item=user_dict['extras']['root_item_uuid'],
             )
         except Exception:
             LOG.exception('Failed to parse API response '
@@ -255,7 +255,6 @@ class SeleniumClient(_SeleniumClientBase):
         payload = json.dumps(
             {
                 'parent_uuid': parent_uuid,
-                'owner_uuid': str(item.owner.uuid),
                 'name': item.name,
                 'is_collection': item.is_collection,
                 'tags': item.setup.tags,
