@@ -18,7 +18,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from omoide_sync import cfg
 from omoide_sync import exceptions
 from omoide_sync import interfaces
-from omoide_sync import models
+from omoide_sync.models import models
 
 API_USERS_ENDPOINT = '/api/v1/users'
 API_ITEMS_ENDPOINT = '/api/v1/items'

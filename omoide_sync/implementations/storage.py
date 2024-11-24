@@ -13,7 +13,7 @@ from omoide_sync import cfg
 from omoide_sync import const
 from omoide_sync import exceptions
 from omoide_sync import interfaces
-from omoide_sync import models
+from omoide_sync.models import models
 
 
 class _FileStorageBase(interfaces.AbsStorage, ABC):

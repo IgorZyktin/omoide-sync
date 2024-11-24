@@ -4,7 +4,7 @@ from loguru import logger as LOG
 
 from omoide_sync import cfg
 from omoide_sync import interfaces
-from omoide_sync import models
+from omoide_sync.models import models
 
 
 class Logic(interfaces.AbsLogic):

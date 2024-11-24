@@ -2,7 +2,7 @@
 
 import abc
 
-from omoide_sync import models
+from omoide_sync.models import models
 
 
 class AbsLogic(abc.ABC):

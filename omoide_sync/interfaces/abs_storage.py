@@ -3,7 +3,7 @@
 import abc
 from collections.abc import Iterator
 
-from omoide_sync import models
+from omoide_sync.models import models
 
 
 class AbsStorage(abc.ABC):
