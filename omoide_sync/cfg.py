@@ -24,7 +24,7 @@ class Config(BaseSettings):
     root_folder: Path
     trash_folder: Path
     dry_run: bool = False
-    log_level: str = 'INFO'
+    log_file: str = 'omoide_sync.log'
     supported_formats: set[str] = {
         '.png',
         '.jpg',

@@ -1,25 +1,8 @@
 """Code that prepares application for run."""
 
-import logging
-
 from omoide_sync import cfg
-from omoide_sync import const
 from omoide_sync import implementations
 from omoide_sync import interfaces
-
-
-def setup_logger(config: cfg.Config) -> None:
-    """Apply logging settings."""
-    log_file_path = config.root_folder / const.LOG_FILENAME
-    logging.basicConfig(
-        encoding='utf-8',
-        level=logging.getLevelName(config.log_level.upper()),
-        format='%(asctime)s - %(levelname)7s - %(name)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file_path, encoding='utf-8'),
-            logging.StreamHandler(),
-        ],
-    )
 
 
 def get_client(config: cfg.Config) -> interfaces.AbsClient:

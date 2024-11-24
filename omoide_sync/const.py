@@ -1,6 +1,5 @@
 """Constant values."""
 
-LOG_FILENAME = 'omoide-sync.log'
 SETUP_FILENAMES = frozenset(
     {
         'setup.yaml',

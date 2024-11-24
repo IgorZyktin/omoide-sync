@@ -1,16 +1,17 @@
 """Entry point."""
 
-import logging
+from loguru import logger
 
 from omoide_sync import cfg
 from omoide_sync import startup
+
+LOG = logger
 
 
 def main() -> None:
     """Entry point."""
     config = cfg.get_config()
-    startup.setup_logger(config)
-    logger = logging.getLogger(__name__)
+    LOG.add(config.log_file, rotation='1 MB')
 
     try:
         storage = startup.get_storage_handler(config)
@@ -25,7 +26,7 @@ def main() -> None:
         logic.execute()
     except Exception:
         msg = 'Failed to synchronize'
-        logger.exception(msg)
+        LOG.exception(msg)
         raise
 
 
