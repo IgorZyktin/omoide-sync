@@ -16,6 +16,8 @@ dependencies = [
     "loguru >= 0.7.2",
     "omoide-client>=0.3.10",
     "httpx>=0.27.2",
+    "typer>=0.13.1",
+    "ruff>=0.8.0",
 ]
 
 [project.optional-dependencies]

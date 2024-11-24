@@ -1,11 +1,7 @@
 """Constant values."""
 
-SETUP_FILENAMES = frozenset(
-    {
-        'setup.yaml',
-        'setup.yml',
-    }
-)
+DEFAULT_SPACER = '___'
+SETUP_FILENAME = 'setup.toml'
 
 TERMINATION_NOTHING = 'nothing'
 TERMINATION_MOVE = 'move'

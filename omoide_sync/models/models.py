@@ -58,11 +58,7 @@ class Item:
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return (
-            f'<Item({self.name}, '
-            f'children={len(self.children)}, '
-            f'parent={self.parent}>'
-        )
+        return f'<Item({self.name}, ' f'children={len(self.children)}, ' f'parent={self.parent}>'
 
     def __str__(self) -> str:
         """Return string representation."""

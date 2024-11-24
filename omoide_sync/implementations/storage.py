@@ -175,10 +175,7 @@ class FileStorage(_FileStorageBase):
     def prepare_termination(self, item: models.Item) -> None:
         """Create resources if need to."""
         move1 = item.setup.termination_strategy_item == const.TERMINATION_MOVE
-        move2 = (
-            item.setup.termination_strategy_collection
-            == const.TERMINATION_MOVE
-        )
+        move2 = item.setup.termination_strategy_collection == const.TERMINATION_MOVE
 
         if (move1 or move2) and item.setup.treat_as_collection:
             path = self._get_item_path(item)
@@ -187,16 +184,14 @@ class FileStorage(_FileStorageBase):
 
             if self.config.dry_run:
                 LOG.debug(
-                    'Supposed to copy folder tree because '
-                    'of collection {} from {} to {}',
+                    'Supposed to copy folder tree because ' 'of collection {} from {} to {}',
                     item,
                     source_path,
                     dest_path,
                 )
             else:
                 LOG.debug(
-                    'Copying folder tree because '
-                    'of collection {} from {} to {}',
+                    'Copying folder tree because ' 'of collection {} from {} to {}',
                     item,
                     source_path,
                     dest_path,
@@ -278,15 +273,10 @@ class FileStorage(_FileStorageBase):
             case const.TERMINATION_DELETE:
                 full_path = self.config.root_folder / path
 
-                filenames = {
-                    each.name for each in full_path.iterdir() if each.is_file()
-                }
+                filenames = {each.name for each in full_path.iterdir() if each.is_file()}
 
                 unexpected_files = filenames - const.SETUP_FILENAMES
-                must_be_deleted = (
-                    item.setup.termination_strategy_item
-                    == const.TERMINATION_DELETE
-                )
+                must_be_deleted = item.setup.termination_strategy_item == const.TERMINATION_DELETE
 
                 if unexpected_files and must_be_deleted:
                     msg = (

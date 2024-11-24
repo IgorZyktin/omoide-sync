@@ -16,7 +16,7 @@ class User:
         name: str,
         login: str,
         password: str,
-        root_item_uuid: UUID | None,
+        root_item_uuid: UUID | None = None,
     ) -> None:
         """Initialize instance."""
         self.uuid = uuid

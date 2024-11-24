@@ -55,9 +55,9 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
 
     def _wait_for_upload(self, item: models.Item, timeout: int) -> None:
         """Wait for uploading to complete."""
-        deadline = datetime.datetime.now(
-            tz=datetime.timezone.utc
-        ) + datetime.timedelta(seconds=timeout)
+        deadline = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+            seconds=timeout
+        )
 
         while datetime.datetime.now(tz=datetime.timezone.utc) < deadline:
             try:
@@ -154,10 +154,12 @@ class SeleniumClient(_SeleniumClientBase):
                 root_item=user_dict['extras']['root_item_uuid'],
             )
         except Exception:
-            LOG.exception('Failed to parse API response '
-                          'after requesting user info, got body {}', body)
+            LOG.exception(
+                'Failed to parse API response ' 'after requesting user info, got body {}', body
+            )
             raise exceptions.NetworkRelatedError(
-                'Failed to parse API response after requesting user info')
+                'Failed to parse API response after requesting user info'
+            )
 
         return user
 
@@ -199,14 +201,9 @@ class SeleniumClient(_SeleniumClientBase):
 
         if r.status_code != http.HTTPStatus.OK:
             if item.uuid:
-                msg = (
-                    f'Failed to get item {item}: ' f'{r.status_code} {r.text}'
-                )
+                msg = f'Failed to get item {item}: ' f'{r.status_code} {r.text}'
             else:
-                msg = (
-                    f'Failed to get item by name {item}: '
-                    f'{r.status_code} {r.text}'
-                )
+                msg = f'Failed to get item by name {item}: ' f'{r.status_code} {r.text}'
             raise exceptions.NetworkRelatedError(msg)
 
         response = r.json()
@@ -248,9 +245,7 @@ class SeleniumClient(_SeleniumClientBase):
         if item.real_parent is None:
             parent_uuid = str(item.owner.root_item)
         else:
-            parent_uuid = (
-                str(item.real_parent.uuid) if item.real_parent.uuid else None
-            )
+            parent_uuid = str(item.real_parent.uuid) if item.real_parent.uuid else None
 
         payload = json.dumps(
             {
@@ -276,8 +271,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         if r.status_code not in (http.HTTPStatus.OK, http.HTTPStatus.CREATED):
             msg = (
-                f'Failed to create item {item}: '
-                f'{r.status_code} {r.text!r}, payload: {payload}'
+                f'Failed to create item {item}: ' f'{r.status_code} {r.text!r}, payload: {payload}'
             )
             raise exceptions.NetworkRelatedError(msg)
 

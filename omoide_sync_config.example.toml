@@ -5,7 +5,7 @@ trash_folder = "~/omoide_sync/trash"
 dry_run = false
 log_file = "omoide_sync.log"
 cred_file = "omoide_sync_credentials.toml"
-config_file = "omoide_sync_config.toml"
+spacer = "___"
 supported_formats = [
     ".png",
     ".jpg",
@@ -14,4 +14,3 @@ supported_formats = [
 ]
 
 [root]
-
