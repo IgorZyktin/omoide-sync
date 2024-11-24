@@ -1,17 +1,13 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "omoide-sync"
 version = "0.1.0"
 description = "CLI tool that synchronizes local storage with Omoide account"
-readme = "README.md"
 authors = [
     { name = "Igor Zyktin", email = "nicord@yandex.ru" }
 ]
+readme = "README.md"
 license = { text = "MIT License" }
-requires-python = ">= 3.10"
+requires-python = ">=3.12"
 dependencies = [
     "PyYAML >= 6.0.0",
     "pydantic-settings >= 2.3.0",
@@ -28,17 +24,16 @@ tests = [
     "types-PyYAML >= 6.0.12",
 ]
 
-
 [project.scripts]
 omoide-sync = "omoide_sync:__main__"
 
 [project.urls]
-Homepage = "https://www.omoide.ru"
 Repository = "https://github.com/IgorZyktin/omoide-sync"
 Issues = "https://github.com/IgorZyktin/omoide-sync/issues"
 
 [tool.ruff]
-line-length = 79
+line-length = 100
+target-version = "py312"
 
 lint.select = [
     "A",     # flake8-builtins
@@ -139,20 +134,8 @@ warn_return_any = true
 warn_unused_configs = true
 exclude = ["^venv"]
 plugins = [
-  "pydantic.mypy"
+    "pydantic.mypy",
 ]
-
-#follow_imports = "silent"
-#warn_redundant_casts = true
-#warn_unused_ignores = true
-#disallow_any_generics = true
-#check_untyped_defs = true
-#no_implicit_reexport = true
-
-# for strict mypy: (this is the tricky one :-))
-#disallow_untyped_defs = true
-
-
 
 [[tool.mypy.overrides]]
 module = "omoide_sync.tests.*"
