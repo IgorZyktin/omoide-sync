@@ -1,9 +1,12 @@
 """Entry point."""
 
+from httpx import BasicAuth
 from loguru import logger
+from omoide_client import AuthenticatedClient
 
 from omoide_sync import cfg
-from omoide_sync import startup
+from omoide_sync import exceptions
+from omoide_sync import models
 
 LOG = logger
 
@@ -13,21 +16,32 @@ def main() -> None:
     config = cfg.get_config()
     LOG.add(config.log_file, rotation='1 MB')
 
-    try:
-        storage = startup.get_storage_handler(config)
-        client = startup.get_client(config)
-        logic = startup.get_logic(config, client, storage)
-    except Exception:
-        msg = 'Failed to initialize application'
-        logger.exception(msg)
-        raise
+    root = models.Root(config)
+    root.sync()
 
-    try:
-        logic.execute()
-    except Exception:
-        msg = 'Failed to synchronize'
-        LOG.exception(msg)
-        raise
+    for user in root.users:
+        try:
+            sync_one_user(config, user)
+        except exceptions.UserRelatedError:
+            msg = f'Failed to synchronize user {user.login}'
+            LOG.exception(msg)
+            continue
+
+
+def sync_one_user(config: cfg.Config, user: models.User) -> None:
+    """Synchronize all items for specific user."""
+    client = AuthenticatedClient(
+        base_url=config.api_url,
+        httpx_args={
+            'auth': BasicAuth(username=user.login, password=user.password),
+        },
+        token='',
+    )
+    user.client = client
+    user.sync()
+
+    # for collection in user.get_collections():
+    #     collection.upload()
 
 
 if __name__ == '__main__':

@@ -159,3 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 */omoide_sync.log
+*/omoide_sync_credentials.toml
+*/omoide_sync_config.toml

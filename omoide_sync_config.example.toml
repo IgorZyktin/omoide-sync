@@ -1,0 +1,17 @@
+[config]
+api_url = "http://127.0.0.1:8080/api"
+root_folder = "~/omoide_sync/root"
+trash_folder = "~/omoide_sync/trash"
+dry_run = false
+log_file = "omoide_sync.log"
+cred_file = "omoide_sync_credentials.toml"
+config_file = "omoide_sync_config.toml"
+supported_formats = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+]
+
+[root]
+
