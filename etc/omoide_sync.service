@@ -1,0 +1,13 @@
+[Unit]
+Description=Omoide sync job
+After=network.target
+Wants=omoide_sync.timer
+
+[Service]
+Type=oneshot
+User=<sync user>
+WorkingDirectory=/home/<sync user>/omoide-sync
+ExecStart=<venv path> -m omoide_sync
+
+[Install]
+WantedBy=multi-user.target

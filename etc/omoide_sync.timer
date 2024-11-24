@@ -1,0 +1,10 @@
+[Unit]
+Description=Omoide sync daily job timer
+Requires=omoide_sync.service
+
+[Timer]
+Unit=omoide_sync.service
+OnCalendar=*-*-* 7:00:00
+
+[Install]
+WantedBy=timers.target
