@@ -10,12 +10,13 @@ from pathlib import Path
 class RawUser:
     """Initial user representation."""
 
+    name: str
     login: str
     password: str
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f'RawUser<{self.login}>'
+        return f'RawUser<{self.name}>'
 
 
 @dataclass(frozen=True)
