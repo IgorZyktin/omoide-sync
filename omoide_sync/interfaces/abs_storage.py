@@ -3,7 +3,7 @@
 import abc
 from collections.abc import Iterator
 
-from omoide_sync.models import models
+from omoide_sync import models
 
 
 class AbsStorage(abc.ABC):
@@ -17,21 +17,21 @@ class AbsStorage(abc.ABC):
     def get_all_collections(
         self,
         user: models.User,
-    ) -> Iterator[models.Item]:
+    ) -> Iterator[models.Collection]:
         """Iterate on all items."""
 
     @abc.abstractmethod
-    def get_paths(self, item: models.Item) -> dict[str, str]:
+    def get_paths(self, item: models.Collection) -> dict[str, str]:
         """Return path to data for every child item."""
 
     @abc.abstractmethod
-    def prepare_termination(self, item: models.Item) -> None:
+    def prepare_termination(self, item: models.Collection) -> None:
         """Create resources if need to."""
 
     @abc.abstractmethod
-    def terminate_item(self, item: models.Item) -> None:
+    def terminate_item(self, item: models.Collection) -> None:
         """Finish item processing."""
 
     @abc.abstractmethod
-    def terminate_collection(self, item: models.Item) -> None:
+    def terminate_collection(self, item: models.Collection) -> None:
         """Finish collection processing."""

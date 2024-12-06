@@ -2,7 +2,7 @@
 
 import abc
 
-from omoide_sync.models import models
+from omoide_sync import models
 
 
 class AbsLogic(abc.ABC):
@@ -17,5 +17,5 @@ class AbsLogic(abc.ABC):
         """Upload data for given user."""
 
     @abc.abstractmethod
-    def create_chain(self, item: models.Item) -> None:
+    def create_chain(self, item: models.Collection) -> None:
         """Create whole chain of items."""

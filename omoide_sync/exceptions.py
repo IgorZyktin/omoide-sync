@@ -13,6 +13,10 @@ class UserRelatedError(OmoideSyncError):
     """Got problem with user."""
 
 
+class ItemRelatedError(OmoideSyncError):
+    """Got problem with item."""
+
+
 class StorageRelatedError(OmoideSyncError):
     """Got problem with storage."""
 

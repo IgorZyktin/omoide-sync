@@ -1,24 +1,24 @@
 """HTTP client that interacts with the API."""
 
+from abc import ABC
 import datetime
 import http
 import json
 import time
-from abc import ABC
 from typing import Any
 from uuid import UUID
 
-import requests
-import selenium.common.exceptions
 from loguru import logger as LOG
+import requests
 from selenium import webdriver
+import selenium.common.exceptions
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from omoide_sync import cfg
 from omoide_sync import exceptions
 from omoide_sync import interfaces
-from omoide_sync.models import models
+from omoide_sync import models
 
 API_USERS_ENDPOINT = '/api/v1/users'
 API_ITEMS_ENDPOINT = '/api/v1/items'
@@ -30,7 +30,7 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
     def __init__(self, config: cfg.Config) -> None:
         """Initialize instance."""
         self.config = config
-        self._item_cache: dict[UUID, models.Item] = {}
+        self._item_cache: dict[UUID, models.Collection] = {}
         self._driver: WebDriver | None = None
 
     @property
@@ -41,7 +41,7 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
             raise exceptions.ConfigRelatedError(msg)
         return self._driver
 
-    def _make_auth_url(self, item: models.Item) -> str:
+    def _make_auth_url(self, item: models.Collection) -> str:
         """Make url that will allow us to login."""
         if self.config.url.startswith('https://'):
             prefix = 'https://'
@@ -53,13 +53,13 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
 
         return f'{prefix}{item.owner.login}:{item.owner.password}@{url_end}'
 
-    def _wait_for_upload(self, item: models.Item, timeout: int) -> None:
+    def _wait_for_upload(self, item: models.Collection, timeout: int) -> None:
         """Wait for uploading to complete."""
-        deadline = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+        deadline = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(
             seconds=timeout
         )
 
-        while datetime.datetime.now(tz=datetime.timezone.utc) < deadline:
+        while datetime.datetime.now(tz=datetime.UTC) < deadline:
             try:
                 self.driver.find_element(
                     'xpath',
@@ -163,7 +163,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         return user
 
-    def get_item(self, item: models.Item) -> models.Item | None:
+    def get_item(self, item: models.Collection) -> models.Collection | None:
         """Return Item from the API."""
         LOG.info('Getting item {} for {}', item, item.owner)
 
@@ -227,7 +227,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         return item
 
-    def create_item(self, item: models.Item) -> models.Item:
+    def create_item(self, item: models.Collection) -> models.Collection:
         """Crete Item in the API."""
         LOG.info('Creating item {} for {}', item, item.owner)
 
@@ -280,7 +280,7 @@ class SeleniumClient(_SeleniumClientBase):
 
         return item
 
-    def upload(self, item: models.Item, paths: dict[str, str]) -> None:
+    def upload(self, item: models.Collection, paths: dict[str, str]) -> None:
         """Crete Item in the API."""
         # logging in
         auth_url = self._make_auth_url(item)

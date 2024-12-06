@@ -1,9 +1,9 @@
 """Global configuration."""
 
-import sys
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+import sys
+import tomllib
 
 
 @dataclass(frozen=True)

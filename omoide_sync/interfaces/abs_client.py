@@ -2,7 +2,7 @@
 
 import abc
 
-from omoide_sync.models import models
+from omoide_sync import models
 
 
 class AbsClient(abc.ABC):
@@ -21,13 +21,13 @@ class AbsClient(abc.ABC):
         """Return User from the API."""
 
     @abc.abstractmethod
-    def get_item(self, item: models.Item) -> models.Item | None:
+    def get_item(self, item: models.Collection) -> models.Collection | None:
         """Return Item from the API."""
 
     @abc.abstractmethod
-    def create_item(self, item: models.Item) -> models.Item:
+    def create_item(self, item: models.Collection) -> models.Collection:
         """Create Item in the API."""
 
     @abc.abstractmethod
-    def upload(self, item: models.Item, paths: dict[str, str]) -> None:
+    def upload(self, item: models.Collection, paths: dict[str, str]) -> None:
         """Create Item in the API."""

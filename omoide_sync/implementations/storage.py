@@ -1,19 +1,19 @@
 """Storage handler that can work with actual data."""
 
-import os
-import shutil
 from abc import ABC
 from collections.abc import Iterator
+import os
 from pathlib import Path
+import shutil
 
-import yaml
 from loguru import logger as LOG
+import yaml
 
 from omoide_sync import cfg
 from omoide_sync import const
 from omoide_sync import exceptions
 from omoide_sync import interfaces
-from omoide_sync.models import models
+from omoide_sync import models
 
 
 class _FileStorageBase(interfaces.AbsStorage, ABC):
@@ -62,13 +62,13 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         self,
         user: models.User,
         path: Path,
-        parent: models.Item,
-    ) -> models.Item | None:
+        parent: models.Collection,
+    ) -> models.Collection | None:
         """Return Item instance for given path."""
         index = path.name.rfind('.')
         ext = path.name[index:].lower()
         if ext in self.config.supported_formats:
-            item = models.Item(
+            item = models.Collection(
                 uuid=None,
                 name=path.name,
                 owner=user,
@@ -85,12 +85,12 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         self,
         user: models.User,
         path: Path,
-        parent: models.Item | None,
-    ) -> Iterator[models.Item]:
+        parent: models.Collection | None,
+    ) -> Iterator[models.Collection]:
         """Scan folder and return it as a collection."""
         setup = self._get_collection_setup(path)
 
-        collection = models.Item(
+        collection = models.Collection(
             uuid=None,
             name=path.name,
             owner=user,
@@ -122,7 +122,7 @@ class _FileStorageBase(interfaces.AbsStorage, ABC):
         yield collection
 
     @staticmethod
-    def _get_item_path(item: models.Item) -> Path:
+    def _get_item_path(item: models.Collection) -> Path:
         """Return relative path to the item and its filename (if any)."""
         path = Path('.') / item.owner.login
 
@@ -151,7 +151,7 @@ class FileStorage(_FileStorageBase):
     def get_all_collections(
         self,
         user: models.User,
-    ) -> Iterator[models.Item]:
+    ) -> Iterator[models.Collection]:
         """Iterate on all collections."""
         path = self.config.root_folder / user.login
 
@@ -162,7 +162,7 @@ class FileStorage(_FileStorageBase):
             if folder.is_dir() and not folder.name.startswith('_'):
                 yield from self._process_folder(user, folder, parent=None)
 
-    def get_paths(self, item: models.Item) -> dict[str, str]:
+    def get_paths(self, item: models.Collection) -> dict[str, str]:
         """Return path to data for every child item."""
         paths: dict[str, str] = {}
 
@@ -172,7 +172,7 @@ class FileStorage(_FileStorageBase):
 
         return paths
 
-    def prepare_termination(self, item: models.Item) -> None:
+    def prepare_termination(self, item: models.Collection) -> None:
         """Create resources if need to."""
         move1 = item.setup.termination_strategy_item == const.TERMINATION_MOVE
         move2 = item.setup.termination_strategy_collection == const.TERMINATION_MOVE
@@ -202,7 +202,7 @@ class FileStorage(_FileStorageBase):
                     dirs_exist_ok=True,
                 )
 
-    def terminate_item(self, item: models.Item) -> None:
+    def terminate_item(self, item: models.Collection) -> None:
         """Finish item processing."""
         path = self._get_item_path(item)
 
@@ -239,7 +239,7 @@ class FileStorage(_FileStorageBase):
                     LOG.debug('Deleting {} at {}', item, full_path)
                     os.remove(full_path)
 
-    def terminate_collection(self, item: models.Item) -> None:
+    def terminate_collection(self, item: models.Collection) -> None:
         """Finish collection processing."""
         path = self._get_item_path(item)
 

@@ -4,7 +4,7 @@ from loguru import logger as LOG
 
 from omoide_sync import cfg
 from omoide_sync import interfaces
-from omoide_sync.models import models
+from omoide_sync import models
 
 
 class Logic(interfaces.AbsLogic):
@@ -64,7 +64,7 @@ class Logic(interfaces.AbsLogic):
 
             self.storage.terminate_collection(item)
 
-    def create_chain(self, item: models.Item) -> None:
+    def create_chain(self, item: models.Collection) -> None:
         """Create whole chain of items."""
         if item.setup.treat_as_collection:
             names: list[str] = [item.owner.name]
