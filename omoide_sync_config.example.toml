@@ -1,16 +1,21 @@
 [config]
 api_url = "http://127.0.0.1:8080/api"
-root_folder = "~/omoide_sync/root"
-trash_folder = "~/omoide_sync/trash"
-dry_run = false
-log_file = "omoide_sync.log"
-cred_file = "omoide_sync_credentials.toml"
+source_folder = "~/omoide_sync/source"
+archive_folder = "~/omoide_sync/archive"
+log_filename = "omoide_sync.log"
+cred_filename = "omoide_sync_credentials.toml"
+setup_filename = "setup.yaml"
 spacer = "___"
 supported_formats = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".webp",
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
 ]
 
 [root]
+final_collection = "move"
+final_item = "move"
+treat_as_collection = true
+tags = []
+limit = -1
