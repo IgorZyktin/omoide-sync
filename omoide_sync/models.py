@@ -1,6 +1,5 @@
 """Project models."""
 
-from collections.abc import Iterator
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
@@ -56,11 +55,14 @@ class Collection:
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f'<Item({self.name}, children={len(self.children)}, parent={self.parent.name}>'
+        return (
+            f'<Item uuid={self._uuid}, {self.name}, '
+            f'children={len(self.children)}, parent={self.parent.name}>'
+        )
 
     def __str__(self) -> str:
         """Return string representation."""
-        return f'<{self.uuid} {self.name}>'
+        return f'<Item uuid={self.uuid}, {self.name}>'
 
     @property
     def uuid(self) -> UUID:
@@ -77,44 +79,50 @@ class Collection:
             new_uuid = UUID(new_uuid)
         self._uuid = new_uuid
 
+    def _find_ourself_by_name(self) -> tuple[UUID, str]:
+        """Find item by name and parent info."""
+        response = api_get_many_items_v1_items_get.sync(
+            owner_uuid=self.owner.uuid,
+            parent_uuid=self.parent.uuid,
+            name=self.name,
+            client=self.owner.client,
+        )
+
+        if not response.items:
+            msg = f'Cannot find item by name {self.name!r} and parent {self.parent.uuid}'
+            raise exceptions.ItemRelatedError(msg)
+
+        if len(response.items) > 1:
+            msg = (
+                f'Got more than one child of {self.parent} named {self.name!r}, '
+                'you should explicitly specify UUID in folder name'
+            )
+            raise exceptions.ItemRelatedError(msg)
+
+        return response.items[0].uuid, response.items[0].name
+
     def init(self) -> None:
         """Synchronize collection with API."""
+        # TODO - what if item does not exist yet?
         if self._uuid is not None:
             response = api_get_item_v1_items_item_uuid_get.sync(
                 item_uuid=self.uuid,
                 client=self.owner.client,
             )
-            remote_item = response.item
+            remote_name = response.item.name
         else:
-            response = api_get_many_items_v1_items_get.sync(
-                owner_uuid=self.owner.uuid,
-                parent_uuid=self.parent.uuid,
-                client=self.owner.client,
-                limit=100,
-            )
-            print('-' * 20)
-            print(*response.items, sep='\n')
-            matching = [item for item in response.items if item.name == self.name]
+            remote_uuid, remote_name = self._find_ourself_by_name()
+            self.uuid = remote_uuid
 
-            if not matching:
-                msg = f'Cannot find item by name {self.name!r} and parent {self.parent.uuid}'
-                raise exceptions.ItemRelatedError(msg)
-
-            if len(matching) > 1:
-                msg = f'Got more than child named {matching[0].name!r}'
-                raise exceptions.ItemRelatedError(msg)
-
-            remote_item = matching[0]
-            self.uuid = remote_item.uuid
-
-        if remote_item.name != self.name:
+        if remote_name != self.name:
             msg = (
                 f'Conflicting name for item, '
                 f'folder says {self.name}, '
-                f'but service says {remote_item.name}'
+                f'but service says {remote_name}'
             )
             raise exceptions.ItemRelatedError(msg)
 
+        LOG.debug('Got initial info on item {} {}', self.uuid, self.name)
         self.init_children()
 
     def init_children(self) -> None:
@@ -175,7 +183,7 @@ class User:
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f'User<{self.name}>'
+        return f'<User uuid={self._uuid}, {self.name}>'
 
     @property
     def client(self) -> AuthenticatedClient:
@@ -273,9 +281,10 @@ class User:
             msg = f'Failed to find {self.login} among other {len(all_users.users)} users'
             raise exceptions.UserRelatedError(msg)
 
-        self.sync_collections()
+        LOG.debug('Got initial info on user {} {}', self.uuid, self.name)
+        self.init_collections()
 
-    def sync_collections(self) -> None:
+    def init_collections(self) -> None:
         """Read all underlying folders."""
         self.root_item = Collection(
             uuid=self.root_item_uuid,
@@ -305,11 +314,6 @@ class User:
 
             self.collections.append(new_item)
             self.root_item.children.append(new_item)
-
-    def iter_collections(self) -> Iterator[Collection]:
-        """Iterate on all collections, including nested."""
-        for collection in self.collections:
-            yield from collection.iter_children()
 
 
 class Source:
