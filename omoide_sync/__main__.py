@@ -14,7 +14,7 @@ app = typer.Typer()
 
 
 @app.command()
-def sync(config_file: str, dry_run: bool = False) -> None:
+def sync(config_file: str, *, dry_run: bool = False) -> None:
     """Synchronize local storage with API."""
     config = cfg.get_config(config_file=config_file, dry_run=dry_run)
 

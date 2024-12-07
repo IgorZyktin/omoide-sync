@@ -13,10 +13,12 @@ from uuid import UUID
 
 from loguru import logger
 from omoide_client.api.info import api_get_myself_v1_info_whoami_get
+from omoide_client.api.items import api_create_item_v1_items_post
 from omoide_client.api.items import api_get_item_v1_items_item_uuid_get
 from omoide_client.api.items import api_get_many_items_v1_items_get
 from omoide_client.api.users import api_get_all_users_v1_users_get
 from omoide_client.client import AuthenticatedClient
+from omoide_client.models import ItemInput
 import yaml
 
 from omoide_sync import cfg
@@ -25,6 +27,8 @@ from omoide_sync import utils
 
 LOG = logger
 
+CREATE = 'create'
+RAISE = 'raise'
 MOVE = 'move'
 DELETE = 'delete'
 NOTHING = 'nothing'
@@ -124,39 +128,78 @@ class Collection:
             new_uuid = UUID(new_uuid)
         self._uuid = new_uuid
 
-    def _find_ourself_by_name(self) -> tuple[UUID, str]:
+    def _find_ourself_by_name_or_create(self) -> tuple[UUID, str]:
         """Find item by name and parent info."""
-        response = api_get_many_items_v1_items_get.sync(
+        get_response = api_get_many_items_v1_items_get.sync(
             owner_uuid=self.owner.uuid,
             parent_uuid=self.parent.uuid,
             name=self.name,
             client=self.owner.client,
         )
 
-        if not response.items:
-            msg = f'Cannot find item by name {self.name!r} and parent {self.parent.uuid}'
+        if get_response is None:
+            msg = f'Failed to get children of {self.parent.uuid} with name {self.name!r}'
             raise exceptions.ItemRelatedError(msg)
 
-        if len(response.items) > 1:
+        if len(get_response.items) > 1:
             msg = (
                 f'Got more than one child of {self.parent} named {self.name!r}, '
                 'you should explicitly specify UUID in folder name'
             )
             raise exceptions.ItemRelatedError(msg)
 
-        return response.items[0].uuid, response.items[0].name
+        if get_response.items:
+            uuid = get_response.items[0].uuid
+            name = get_response.items[0].name
+
+        elif self.setup.init_collection == CREATE:
+            if self.owner.source.config.dry_run:
+                LOG.info('Will create child of {} with name {}', self.parent.uuid, self.name)
+                uuid = UUID('00000000-0000-0000-0000-000000000000')
+                name = self.name
+            else:
+                LOG.info('Creating child of {} with name {}', self.parent.uuid, self.name)
+                create_response = api_create_item_v1_items_post.sync(
+                    body=ItemInput(
+                        parent_uuid=self.parent.uuid,
+                        name=self.name,
+                        is_collection=True,
+                        tags=self.setup.tags,
+                        permissions=[],
+                    ),
+                    client=self.owner.client,
+                )
+
+                if create_response is None:
+                    msg = (
+                        f'Failed to create child of {self.parent.uuid} with name {self.name!r}'
+                    )
+                    raise exceptions.ItemRelatedError(msg)
+
+                uuid = create_response.item.uuid
+                name = create_response.item.name
+
+        else:
+            msg = f'Cannot find item by name {self.name!r} and parent {self.parent.uuid}'
+            raise exceptions.ItemRelatedError(msg)
+
+        return uuid, name
 
     def init(self) -> None:
         """Synchronize collection with API."""
-        # TODO - what if item does not exist yet?
         if self._uuid is not None:
             response = api_get_item_v1_items_item_uuid_get.sync(
                 item_uuid=self.uuid,
                 client=self.owner.client,
             )
+
+            if response is None:
+                msg = f'Item with UUID {self._uuid} does not exist'
+                raise exceptions.ItemRelatedError(msg)
+
             remote_name = response.item.name
         else:
-            remote_uuid, remote_name = self._find_ourself_by_name()
+            remote_uuid, remote_name = self._find_ourself_by_name_or_create()
             self.uuid = remote_uuid
 
         if remote_name != self.name:
@@ -228,7 +271,7 @@ class Collection:
             if not self.owner.source.config.dry_run:
                 shutil.rmtree(self.path)
 
-    def _do_upload(self) -> None:
+    def _do_upload(self) -> None:  # noqa: PLR0912,C901
         """Upload content to API."""
         local_files = [
             file
@@ -471,6 +514,7 @@ class Source:
 class Setup:
     """Personal settings for collection."""
 
+    init_collection: Literal['create', 'raise'] = 'raise'
     final_collection: Literal['move', 'delete', 'nothing'] = 'move'
     final_item: Literal['move', 'delete', 'nothing'] = 'move'
     ephemeral: bool = False

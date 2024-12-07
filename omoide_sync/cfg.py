@@ -37,7 +37,7 @@ class Config:
     raw_setup: dict[str, str]
 
 
-def get_config(config_file: str, dry_run: bool) -> Config:
+def get_config(config_file: str, *, dry_run: bool) -> Config:  # noqa: C901
     """Return Config instance."""
     config_path = Path(config_file)
 
@@ -45,8 +45,8 @@ def get_config(config_file: str, dry_run: bool) -> Config:
         msg = f'Config file does not exist: {config_path.absolute()}'
         sys.exit(msg)
 
-    with open(config_path, 'rb') as config_file:
-        config_data = tomllib.load(config_file)
+    with open(config_path, 'rb') as file:
+        config_data = tomllib.load(file)
 
     if 'config' not in config_data:
         msg = f"There is no 'config' section in the config file: {config_path.absolute()}"

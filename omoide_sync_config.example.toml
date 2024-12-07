@@ -15,6 +15,7 @@ supported_formats = [
 skip_prefixes = ["_"]
 
 [root]
+init_collection = "raise"
 final_collection = "move"
 final_item = "move"
 ephemeral = false
