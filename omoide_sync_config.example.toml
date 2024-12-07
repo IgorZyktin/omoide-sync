@@ -12,6 +12,7 @@ supported_formats = [
     "jpeg",
     "webp",
 ]
+skip_prefixes = ["_"]
 
 [root]
 final_collection = "move"

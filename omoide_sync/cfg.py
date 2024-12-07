@@ -30,7 +30,8 @@ class Config:
     log_level: Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION']
     log_path: Path
     setup_filename: str
-    supported_formats: frozenset[str]
+    supported_formats: tuple[str, ...]
+    skip_prefixes: tuple[str, ...]
     dry_run: bool
     users: list[RawUser]
     raw_setup: dict[str, str]
@@ -105,6 +106,7 @@ def get_config(config_file: str, dry_run: bool) -> Config:
         log_level=config_data['config'].get('log_level', 'INFO'),
         dry_run=dry_run,
         users=users,
-        supported_formats=frozenset(supported_formats),
+        supported_formats=tuple(set(supported_formats)),
+        skip_prefixes=tuple(config_data['config'].get('skip_prefixes', ('_',))),
         raw_setup=config_data.get('root', {}),
     )

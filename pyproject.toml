@@ -104,6 +104,7 @@ lint.ignore = [
     "S311",   # Standard pseudo-random generators for cryptographic purposes
     "SIM108", # Use ternary operator instead of `if`-`else`-block
     "TRY401", # Redundant exception object included in logging.exception call
+    "PLE1205", # Too many arguments for `logging` format string
 ]
 
 [tool.ruff.lint.per-file-ignores]

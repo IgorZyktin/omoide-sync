@@ -4,6 +4,7 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
+import shutil
 from typing import Any
 from typing import Literal
 from typing import Optional
@@ -24,15 +25,59 @@ from omoide_sync import utils
 
 LOG = logger
 
+MOVE = 'move'
+DELETE = 'delete'
+NOTHING = 'nothing'
 
+
+@dataclass
 class Stats:
-    """Upload statistics."""
+    """Global statistic."""
+
+    uploaded_files: int = 0
+    uploaded_bytes: int = 0
+
+    moved_files: int = 0
+    moved_bytes: int = 0
+    moved_folders: int = 0
+
+    deleted_files: int = 0
+    deleted_bytes: int = 0
+    deleted_folders: int = 0
+
+    @property
+    def uploaded_mib(self) -> str:
+        """Return human-readable uploaded size."""
+        return f'{self.uploaded_bytes / 1024 / 1024:0.2f}'
+
+    @property
+    def moved_mib(self) -> str:
+        """Return human-readable moved size."""
+        return f'{self.moved_bytes / 1024 / 1024:0.2f}'
+
+    @property
+    def deleted_mib(self) -> str:
+        """Return human-readable deleted size."""
+        return f'{self.deleted_bytes / 1024 / 1024:0.2f}'
+
+    def __add__(self, other: 'Stats') -> 'Stats':
+        """Summarize two stats."""
+        return Stats(
+            uploaded_files=self.uploaded_files + other.uploaded_files,
+            uploaded_bytes=self.uploaded_bytes + other.uploaded_bytes,
+            moved_files=self.moved_files + other.moved_files,
+            moved_bytes=self.moved_bytes + other.moved_bytes,
+            moved_folders=self.moved_folders + other.moved_folders,
+            deleted_files=self.deleted_files + other.deleted_files,
+            deleted_bytes=self.deleted_bytes + other.deleted_bytes,
+            deleted_folders=self.deleted_folders + other.deleted_folders,
+        )
 
 
 class Collection:
     """Folder abstraction."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         uuid: UUID | None,
         owner: 'User',
@@ -69,7 +114,7 @@ class Collection:
         """Return user UUID."""
         if self._uuid is None:
             msg = f'UUID for item {self.name} is not set yet'
-            raise exceptions.UserRelatedError(msg)
+            raise exceptions.ItemRelatedError(msg)
         return self._uuid
 
     @uuid.setter
@@ -149,15 +194,102 @@ class Collection:
 
     def upload(self) -> None:
         """Upload content to API."""
-        LOG.info('Uploading {} {}', self.uuid, self.name)
+        self._do_upload()
+
+        for item in self.children:
+            try:
+                item.upload()
+            except exceptions.ItemRelatedError:
+                msg = f'Failed to synchronize item uuid={item.uuid}, {item.name}'
+                LOG.exception(msg)
+
+        if self.setup.final_collection == MOVE:
+            if self.owner.source.config.dry_run:
+                LOG.info('Will move folder: {}', self.path.absolute())
+            else:
+                LOG.info('Moving folder: {}', self.path.absolute())
+
+            self.owner.stats.moved_folders += 1
+            utils.move(
+                source_path=self.owner.source.config.source_path,
+                archive_path=self.owner.source.config.archive_path,
+                target_path=self.path,
+            )
+
+        elif self.setup.final_collection == DELETE:
+            if self.owner.source.config.dry_run:
+                LOG.warning('Will delete folder: {}', self.path.absolute())
+            else:
+                LOG.warning('Deleting folder: {}', self.path.absolute())
+
+            self.owner.stats.deleted_folders += 1
+            if not self.owner.source.config.dry_run:
+                shutil.rmtree(self.path)
+
+    def _do_upload(self) -> None:
+        """Upload content to API."""
+        local_files = [
+            file
+            for file in self.path.iterdir()
+            if all(
+                (
+                    file.is_file(),
+                    file.name.endswith(self.owner.source.config.supported_formats),
+                    not file.name.startswith(self.owner.source.config.skip_prefixes),
+                )
+            )
+        ]
+
+        if not local_files:
+            return
+
+        if self.owner.source.config.dry_run:
+            LOG.info('Will upload {} {}', self.uuid, self.name)
+        else:
+            LOG.info('Uploading {} {}', self.uuid, self.name)
+
+        # TODO - actually upload
+        for file in local_files:
+            self.owner.stats.uploaded_files += 1
+            self.owner.stats.uploaded_bytes += file.stat().st_size
+
+        # TODO - consider limits
+
+        if self.setup.final_item == MOVE:
+            if self.owner.source.config.dry_run:
+                LOG.info('Will move files: {}', [str(x) for x in local_files])
+            else:
+                LOG.info('Moving files: {}', [str(x) for x in local_files])
+
+            for file in local_files:
+                self.owner.stats.moved_files += 1
+                self.owner.stats.moved_bytes += file.stat().st_size
+                if not self.owner.source.config.dry_run:
+                    utils.move(
+                        source_path=self.owner.source.config.source_path,
+                        archive_path=self.owner.source.config.archive_path,
+                        target_path=self.path,
+                    )
+
+        elif self.setup.final_item == DELETE:
+            if self.owner.source.config.dry_run:
+                LOG.warning('Will delete files: {}', [str(x) for x in local_files])
+            else:
+                LOG.warning('Deleting files: {}', [str(x) for x in local_files])
+
+            for file in local_files:
+                self.owner.stats.deleted_files += 1
+                self.owner.stats.deleted_bytes += file.stat().st_size
+                if not self.owner.source.config.dry_run:
+                    file.unlink()
 
 
 class User:
     """User abstraction."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        root: 'Source',
+        source: 'Source',
         uuid: UUID | str | None,
         name: str,
         login: str,
@@ -166,12 +298,13 @@ class User:
         setup: 'Setup',
     ) -> None:
         """Initialize instance."""
-        self.root = root
+        self.source = source
         self.name = name
         self.login = login
         self.password = password
         self.path = path
         self.setup = setup
+        self.stats = Stats()
 
         self.collections: list[Collection] = []
 
@@ -282,10 +415,7 @@ class User:
             raise exceptions.UserRelatedError(msg)
 
         LOG.debug('Got initial info on user {} {}', self.uuid, self.name)
-        self.init_collections()
 
-    def init_collections(self) -> None:
-        """Read all underlying folders."""
         self.root_item = Collection(
             uuid=self.root_item_uuid,
             owner=self,
@@ -295,25 +425,6 @@ class User:
             setup=self.setup,
             path=self.path,
         )
-
-        for each in self.path.iterdir():
-            if each.is_file():
-                continue
-
-            uuid, name = utils.get_uuid_and_name(each)
-
-            new_item = Collection(
-                uuid=uuid,
-                owner=self,
-                name=name,
-                parent=self.root_item,
-                children=[],
-                setup=self.setup,
-                path=each,
-            )
-
-            self.collections.append(new_item)
-            self.root_item.children.append(new_item)
 
 
 class Source:
@@ -339,7 +450,7 @@ class Source:
             for raw_user in self.config.users:
                 if raw_user.name == name:
                     new_user = User(
-                        root=self,
+                        source=self,
                         uuid=uuid,
                         name=name,
                         login=raw_user.login,
@@ -382,61 +493,3 @@ class Setup:
     def model_dump(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
-
-
-# @dataclass
-# class Item:
-#     """Item representation."""
-#
-#     uuid: UUID | None
-#     owner: User
-#     name: str
-#     parent: Optional['Item']
-#     children: list['Item']
-#     is_collection: bool
-#     uploaded: int
-#     setup: Setup
-#
-#
-#     @property
-#     def uploaded_enough(self) -> bool:
-#         """Return True if we're reached the upload limit."""
-#         enough = all(
-#             (
-#                 self.setup.upload_limit > 0,
-#                 self.uploaded >= self.setup.upload_limit,
-#             )
-#         )
-#
-#         if enough:
-#             return True
-#
-#         if self.parent:
-#             return self.parent.uploaded_enough
-#
-#         return False
-#
-#     @property
-#     def ancestors(self) -> list['Item']:
-#         """Return all parent items."""
-#         ancestors: list[Item] = []
-#         parent = self.parent
-#
-#         while parent:
-#             ancestors.append(parent)
-#             parent = parent.parent
-#
-#         return list(reversed(ancestors))
-#
-#     @property
-#     def real_parent(self) -> Optional['Item']:
-#         """Return first parent that is treated as a collection."""
-#         parent = self.parent
-#
-#         while parent:
-#             if parent.setup.treat_as_collection:
-#                 return parent
-#
-#             parent = parent.parent
-#
-#         return parent

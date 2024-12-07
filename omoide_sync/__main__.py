@@ -36,6 +36,24 @@ def sync(config_file: str, dry_run: bool = False) -> None:
     else:
         LOG.info('Done synchronizing')
 
+    global_stats = models.Stats()
+    for user in source.users:
+        global_stats += user.stats
+
+    if not global_stats.uploaded_files:
+        LOG.info('Uploaded nothing')
+        return
+
+    LOG.info('Uploaded files: {}, {} MiB', global_stats.uploaded_files, global_stats.uploaded_mib)
+
+    if global_stats.deleted_files or global_stats.deleted_folders:
+        LOG.info('Deleted folders: {}', global_stats.deleted_folders)
+        LOG.info('Deleted files: {}, {} MiB', global_stats.deleted_files, global_stats.deleted_mib)
+
+    if global_stats.moved_files or global_stats.moved_folders:
+        LOG.info('Moved folders: {}', global_stats.moved_folders)
+        LOG.info('Moved files: {}, {} MiB', global_stats.moved_files, global_stats.moved_mib)
+
 
 def sync_one_user(config: cfg.Config, user: models.User) -> None:
     """Synchronize all items for specific user."""
