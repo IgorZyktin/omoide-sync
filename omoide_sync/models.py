@@ -12,11 +12,11 @@ from typing import Self
 from uuid import UUID
 
 from loguru import logger
-from omoide_client import AuthenticatedClient
 from omoide_client.api.info import api_get_myself_v1_info_whoami_get
-from omoide_client.api.items import api_read_item_v1_items_item_uuid_get
-from omoide_client.api.items import api_read_many_items_v1_items_get
+from omoide_client.api.items import api_get_item_v1_items_item_uuid_get
+from omoide_client.api.items import api_get_many_items_v1_items_get
 from omoide_client.api.users import api_get_all_users_v1_users_get
+from omoide_client.client import AuthenticatedClient
 import yaml
 
 from omoide_sync import cfg
@@ -80,17 +80,20 @@ class Collection:
     def init(self) -> None:
         """Synchronize collection with API."""
         if self._uuid is not None:
-            response = api_read_item_v1_items_item_uuid_get.sync(
+            response = api_get_item_v1_items_item_uuid_get.sync(
                 item_uuid=self.uuid,
                 client=self.owner.client,
             )
             remote_item = response.item
         else:
-            response = api_read_many_items_v1_items_get.sync(
+            response = api_get_many_items_v1_items_get.sync(
                 owner_uuid=self.owner.uuid,
                 parent_uuid=self.parent.uuid,
                 client=self.owner.client,
+                limit=100,
             )
+            print('-' * 20)
+            print(*response.items, sep='\n')
             matching = [item for item in response.items if item.name == self.name]
 
             if not matching:
@@ -102,6 +105,7 @@ class Collection:
                 raise exceptions.ItemRelatedError(msg)
 
             remote_item = matching[0]
+            self.uuid = remote_item.uuid
 
         if remote_item.name != self.name:
             msg = (
@@ -233,7 +237,7 @@ class User:
         """Synchronize user with API."""
         me_response = api_get_myself_v1_info_whoami_get.sync(client=self.client)
 
-        if (remote_uuid := me_response['uuid']) is None:
+        if (remote_uuid := me_response.uuid) is None:
             msg = f'{self} is not authorized'
             raise RuntimeError(msg)
 
@@ -245,7 +249,7 @@ class User:
             )
             raise exceptions.UserRelatedError(msg)
 
-        if (remote_name := me_response['name']) != self.name:
+        if (remote_name := me_response.name) != self.name:
             msg = (
                 f'Conflicting name for {self.login}, '
                 f'folder says {self.name}, '
@@ -319,6 +323,8 @@ class Source:
 
     def init(self) -> None:
         """Synchronize root with filesystem."""
+        LOG.debug('Initializing source: {}', self.config.source_path)
+
         for each in self.config.source_path.iterdir():
             if each.is_file():
                 continue
@@ -337,6 +343,7 @@ class Source:
                         path=each,
                         setup=Setup(**{**self.setup.model_dump(), **setup.model_dump()}),
                     )
+                    LOG.debug('Adding raw user {}', name)
                     self.users.append(new_user)
                     break
             else:

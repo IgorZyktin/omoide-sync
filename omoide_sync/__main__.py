@@ -2,7 +2,7 @@
 
 from httpx import BasicAuth
 from loguru import logger
-from omoide_client import AuthenticatedClient
+from omoide_client.client import AuthenticatedClient
 import typer
 
 from omoide_sync import cfg
