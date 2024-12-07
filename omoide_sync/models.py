@@ -123,7 +123,7 @@ class Collection:
             if each.is_file():
                 continue
 
-            uuid, name = utils.split_name(each, self.owner.root.config.spacer)
+            uuid, name = utils.get_uuid_and_name(each)
 
             new_item = Collection(
                 uuid=uuid,
@@ -291,7 +291,7 @@ class User:
             if each.is_file():
                 continue
 
-            uuid, name = utils.split_name(each, self.root.config.spacer)
+            uuid, name = utils.get_uuid_and_name(each)
 
             new_item = Collection(
                 uuid=uuid,
@@ -330,7 +330,7 @@ class Source:
                 continue
 
             setup = Setup.from_path(each, self.config.setup_filename)
-            uuid, name = utils.split_name(each, self.config.spacer)
+            uuid, name = utils.get_uuid_and_name(each)
 
             for raw_user in self.config.users:
                 if raw_user.name == name:

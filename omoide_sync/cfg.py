@@ -31,7 +31,6 @@ class Config:
     log_path: Path
     setup_filename: str
     supported_formats: frozenset[str]
-    spacer: str
     dry_run: bool
     users: list[RawUser]
     raw_setup: dict[str, str]
@@ -93,10 +92,6 @@ def get_config(config_file: str, dry_run: bool) -> Config:
         msg = f'No setup filename is mentioned in the config file: {config_path.absolute()}'
         sys.exit(msg)
 
-    if not (spacer := config_data['config'].get('spacer')):
-        msg = f'No spacer symbol is mentioned in the config file: {config_path.absolute()}'
-        sys.exit(msg)
-
     if not (supported_formats := config_data['config'].get('supported_formats')):
         msg = f'No supported formats are mentioned in the config file: {config_path.absolute()}'
         sys.exit(msg)
@@ -110,7 +105,6 @@ def get_config(config_file: str, dry_run: bool) -> Config:
         log_level=config_data['config'].get('log_level', 'INFO'),
         dry_run=dry_run,
         users=users,
-        spacer=spacer,
         supported_formats=frozenset(supported_formats),
         raw_setup=config_data.get('root', {}),
     )

@@ -55,9 +55,7 @@ class _SeleniumClientBase(interfaces.AbsClient, ABC):
 
     def _wait_for_upload(self, item: models.Collection, timeout: int) -> None:
         """Wait for uploading to complete."""
-        deadline = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(
-            seconds=timeout
-        )
+        deadline = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(seconds=timeout)
 
         while datetime.datetime.now(tz=datetime.UTC) < deadline:
             try:
