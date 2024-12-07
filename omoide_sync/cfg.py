@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import sys
 import tomllib
+from typing import Any
 from typing import Literal
 
 
@@ -34,7 +35,7 @@ class Config:
     skip_prefixes: tuple[str, ...]
     dry_run: bool
     users: list[RawUser]
-    raw_setup: dict[str, str]
+    raw_setup: dict[str, Any]
 
 
 def get_config(config_file: str, *, dry_run: bool) -> Config:  # noqa: C901

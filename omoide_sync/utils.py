@@ -12,6 +12,9 @@ def get_uuid_and_name(path: Path) -> tuple[UUID | None, str]:
     """Return UUID or none and a name."""
     reg = TEMPLATE.match(path.name)
 
+    if reg is None:
+        return None, path.name
+
     uuid = reg.group(1)
     name = reg.group(2)
 

@@ -3,17 +3,18 @@
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
+import inspect
 from pathlib import Path
 import shutil
 from typing import Any
 from typing import Literal
 from typing import Optional
-from typing import Self
 from uuid import UUID
 
 from loguru import logger
 from omoide_client.api.info import api_get_myself_v1_info_whoami_get
 from omoide_client.api.items import api_create_item_v1_items_post
+from omoide_client.api.items import api_create_many_items_v1_items_bulk_post
 from omoide_client.api.items import api_get_item_v1_items_item_uuid_get
 from omoide_client.api.items import api_get_many_items_v1_items_get
 from omoide_client.api.users import api_get_all_users_v1_users_get
@@ -106,7 +107,7 @@ class Collection:
         """Return string representation."""
         return (
             f'<Item uuid={self._uuid}, {self.name}, '
-            f'children={len(self.children)}, parent={self.parent.name}>'
+            f'children={len(self.children)}, parent={self.parent}>'
         )
 
     def __str__(self) -> str:
@@ -130,6 +131,10 @@ class Collection:
 
     def _find_ourself_by_name_or_create(self) -> tuple[UUID, str]:
         """Find item by name and parent info."""
+        if self.parent is None:
+            msg = f'Cannot create root item {self.name!r}'
+            raise exceptions.ItemRelatedError(msg)
+
         get_response = api_get_many_items_v1_items_get.sync(
             owner_uuid=self.owner.uuid,
             parent_uuid=self.parent.uuid,
@@ -154,7 +159,7 @@ class Collection:
 
         elif self.setup.init_collection == CREATE:
             if self.owner.source.config.dry_run:
-                LOG.info('Will create child of {} with name {}', self.parent.uuid, self.name)
+                LOG.info('Will create child of {} with name {}', self.parent, self.name)
                 uuid = UUID('00000000-0000-0000-0000-000000000000')
                 name = self.name
             else:
@@ -290,12 +295,13 @@ class Collection:
         else:
             LOG.info('Uploading {} {}', self.uuid, self.name)
 
-        # TODO - actually upload
+        # TODO - consider limits
+        if not self.owner.source.config.dry_run:
+            self._do_upload_files(local_files)
+
         for file in local_files:
             self.owner.stats.uploaded_files += 1
             self.owner.stats.uploaded_bytes += file.stat().st_size
-
-        # TODO - consider limits
 
         if self.setup.final_item == MOVE:
             if self.owner.source.config.dry_run:
@@ -325,6 +331,32 @@ class Collection:
                 if not self.owner.source.config.dry_run:
                     file.unlink()
 
+    def _do_upload_files(self, files: list[Path]) -> None:
+        """Create new items and upload content for them."""
+        create_response = api_create_many_items_v1_items_bulk_post.sync(
+            body=[
+                ItemInput(
+                    parent_uuid=self.uuid,
+                    name='',
+                    is_collection=False,
+                    tags=self.setup.tags,
+                    permissions=[],  # TODO - what about adding permissions in setup?
+                )
+                for _ in files
+            ],
+            client=self.owner.client,
+        )
+
+        if create_response is None:
+            msg = f'Failed to upload files for {self}'
+            raise exceptions.ItemRelatedError(msg)
+
+        for remote, local in zip(create_response.items, files, strict=False):
+            # TODO - save original filename
+            # TODO - upload content
+            _ = remote
+            _ = local
+
 
 class User:
     """User abstraction."""
@@ -351,9 +383,9 @@ class User:
         self.collections: list[Collection] = []
 
         self._initial_uuid = uuid
-        self._uuid = None
-        self._root_item_uuid = None
-        self._root_item = None
+        self._uuid: UUID | None = None
+        self._root_item_uuid: UUID | None = None
+        self._root_item: Collection | None = None
         self._client = None
 
     def __repr__(self) -> str:
@@ -517,10 +549,8 @@ class Setup:
     tags: list[str] = field(default_factory=list)
     limit: int = -1
 
-    termination_strategy_collection: str = 'nothing'  # FIXME - legacy field
-
     @classmethod
-    def from_path(cls, path: Path, filename: str, parent_setup: 'Setup') -> Self:
+    def from_path(cls, path: Path, filename: str, parent_setup: 'Setup') -> 'Setup':
         """Create instance from given folder."""
         setup = parent_setup.model_dump()
 
@@ -532,7 +562,18 @@ class Setup:
         else:
             setup.update(raw_setup)
 
-        return cls(**setup)
+        return Setup.from_dict(**setup)
+
+    @classmethod
+    def from_dict(cls, **kwargs: Any) -> 'Setup':
+        """Crete instance from arbitrary attributes."""
+        return cls(
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if key in inspect.signature(cls).parameters
+            }
+        )
 
     def model_dump(self) -> dict[str, Any]:
         """Convert to dictionary."""
