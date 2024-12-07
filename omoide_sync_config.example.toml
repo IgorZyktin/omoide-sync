@@ -16,6 +16,6 @@ supported_formats = [
 [root]
 final_collection = "move"
 final_item = "move"
-treat_as_collection = true
+ephemeral = false
 tags = []
 limit = -1

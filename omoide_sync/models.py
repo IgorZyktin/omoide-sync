@@ -360,7 +360,7 @@ class Setup:
 
     final_collection: Literal['move', 'delete', 'nothing'] = 'move'
     final_item: Literal['move', 'delete', 'nothing'] = 'move'
-    treat_as_collection: bool = True
+    ephemeral: bool = False
     tags: list[str] = field(default_factory=list)
     limit: int = -1
 
