@@ -268,7 +268,7 @@ class Collection:
                     utils.move(
                         source_path=self.owner.source.config.source_path,
                         archive_path=self.owner.source.config.archive_path,
-                        target_path=self.path,
+                        target_path=file,
                     )
 
         elif self.setup.final_item == DELETE:
