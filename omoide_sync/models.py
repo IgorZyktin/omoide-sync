@@ -171,9 +171,7 @@ class Collection:
                 )
 
                 if create_response is None:
-                    msg = (
-                        f'Failed to create child of {self.parent.uuid} with name {self.name!r}'
-                    )
+                    msg = f'Failed to create child of {self.parent.uuid} with name {self.name!r}'
                     raise exceptions.ItemRelatedError(msg)
 
                 uuid = create_response.item.uuid
@@ -499,9 +497,7 @@ class Source:
                         login=raw_user.login,
                         password=raw_user.password,
                         path=each,
-                        setup=Setup.from_path(each,
-                                              self.config.setup_filename,
-                                              self.setup),
+                        setup=Setup.from_path(each, self.config.setup_filename, self.setup),
                     )
                     LOG.debug('Adding raw user {}', name)
                     self.users.append(new_user)

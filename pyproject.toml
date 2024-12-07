@@ -139,9 +139,7 @@ ignore_missing_imports = true
 warn_return_any = true
 warn_unused_configs = true
 exclude = ["^venv"]
-plugins = [
-    "pydantic.mypy",
-]
+plugins = []
 
 [[tool.mypy.overrides]]
 module = "omoide_sync.tests.*"

@@ -23,9 +23,9 @@ def sync(config_file: str, *, dry_run: bool = False) -> None:
 
     source = models.Source(
         config=config,
-        setup=models.Setup.from_path(config.source_path,
-                                     config.setup_filename,
-                                     models.Setup(**config.raw_setup))
+        setup=models.Setup.from_path(
+            config.source_path, config.setup_filename, models.Setup(**config.raw_setup)
+        ),
     )
 
     source.init()
