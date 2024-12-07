@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import sys
 import tomllib
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Config:
     api_url: str
     source_path: Path
     archive_path: Path
+    log_level: Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION']
     log_path: Path
     setup_filename: str
     supported_formats: frozenset[str]
@@ -105,6 +107,7 @@ def get_config(config_file: str, dry_run: bool) -> Config:
         archive_path=archive_path,
         setup_filename=setup_filename,
         log_path=log_path,
+        log_level=config_data['config'].get('log_level', 'INFO'),
         dry_run=dry_run,
         users=users,
         spacer=spacer,

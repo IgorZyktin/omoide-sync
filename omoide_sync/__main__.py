@@ -18,7 +18,7 @@ def sync(config_file: str, dry_run: bool = False) -> None:
     """Synchronize local storage with API."""
     config = cfg.get_config(config_file=config_file, dry_run=dry_run)
 
-    LOG.add(config.log_path, rotation='1 MB')
+    LOG.add(config.log_path, level=config.log_level, rotation='1 MB')
     LOG.info('Synchronizing {}', config.source_path.absolute())
 
     source = models.Source(config, setup=models.Setup(**config.raw_setup))
@@ -51,12 +51,8 @@ def sync_one_user(config: cfg.Config, user: models.User) -> None:
 
     LOG.info('Synchronizing user {} {}', user.uuid, user.name)
 
-    try:
-        user.root_item.init()
-        user.root_item.upload()
-    except exceptions.ItemRelatedError as exc:
-        msg = f'Failed to synchronize collection: {exc}'
-        LOG.error(msg)
+    user.root_item.init()
+    user.root_item.upload()
 
 
 if __name__ == '__main__':
