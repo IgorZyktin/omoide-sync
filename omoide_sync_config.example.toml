@@ -21,3 +21,4 @@ final_item = "move"
 ephemeral = false
 tags = []
 limit = -1
+global_limit = -1

@@ -102,6 +102,8 @@ class Collection:
 
         self._uuid = uuid
         self._initial_uuid = uuid
+        self.uploaded = 0
+        self.children_uploaded = 0
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -113,6 +115,13 @@ class Collection:
     def __str__(self) -> str:
         """Return string representation."""
         return f'<Item uuid={self.uuid}, {self.name}>'
+
+    def increment_upload(self, value: int) -> None:
+        """Increment upload value for us and our parent."""
+        self.children_uploaded += value
+
+        if self.parent is not None:
+            self.parent.increment_upload(value)
 
     @property
     def uuid(self) -> UUID:
@@ -222,6 +231,10 @@ class Collection:
             if each.is_file():
                 continue
 
+            if each.name.startswith(self.owner.source.config.skip_prefixes):
+                LOG.warning('Skipping {}', each.name)
+                continue
+
             uuid, name = utils.get_uuid_and_name(each)
 
             new_item = Collection(
@@ -287,6 +300,27 @@ class Collection:
             )
         ]
 
+        if self.setup.limit != -1 and self.setup.limit < len(local_files):
+            threshold = self.setup.limit + 1
+            head = local_files[:threshold]
+            tail = local_files[threshold:]
+            local_files = head
+            LOG.debug('Collection limit stops from uploading {}', tail)
+
+        total_uploaded = self.owner.root_item.children_uploaded
+
+        if (self.setup.global_limit != -1
+                and self.setup.global_limit < (len(local_files) + total_uploaded)):
+            threshold = self.setup.global_limit - total_uploaded
+
+            if threshold <= 0:
+                return
+
+            head = local_files[:threshold]
+            tail = local_files[threshold:]
+            local_files = head
+            LOG.debug('Global limit stops from uploading {}', tail)
+
         if not local_files:
             return
 
@@ -295,7 +329,9 @@ class Collection:
         else:
             LOG.info('Uploading {} {}', self.uuid, self.name)
 
-        # TODO - consider limits
+        self.uploaded += len(local_files)
+        self.increment_upload(len(local_files))
+
         if not self.owner.source.config.dry_run:
             self._do_upload_files(local_files)
 
@@ -520,7 +556,12 @@ class Source:
 
             uuid, name = utils.get_uuid_and_name(each)
 
+            if name.startswith(self.config.skip_prefixes):
+                LOG.warning('Skipping {}', name)
+                continue
+
             for raw_user in self.config.users:
+
                 if raw_user.name == name:
                     new_user = User(
                         source=self,
@@ -548,6 +589,7 @@ class Setup:
     ephemeral: bool = False
     tags: list[str] = field(default_factory=list)
     limit: int = -1
+    global_limit: int = -1
 
     @classmethod
     def from_path(cls, path: Path, filename: str, parent_setup: 'Setup') -> 'Setup':
