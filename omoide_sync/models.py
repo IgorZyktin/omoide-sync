@@ -176,6 +176,7 @@ class Collection:
             if each.is_file():
                 continue
 
+            setup = Setup.from_path(each, self.owner.source.config.setup_filename)
             uuid, name = utils.get_uuid_and_name(each)
 
             new_item = Collection(
@@ -185,7 +186,7 @@ class Collection:
                 parent=self,
                 children=[],
                 path=each,
-                setup=self.setup,
+                setup=Setup(**{**self.setup.model_dump(), **setup.model_dump()}),
             )
 
             self.children.append(new_item)
@@ -210,11 +211,12 @@ class Collection:
                 LOG.info('Moving folder: {}', self.path.absolute())
 
             self.owner.stats.moved_folders += 1
-            utils.move(
-                source_path=self.owner.source.config.source_path,
-                archive_path=self.owner.source.config.archive_path,
-                target_path=self.path,
-            )
+            if not self.owner.source.config.dry_run:
+                utils.move(
+                    source_path=self.owner.source.config.source_path,
+                    archive_path=self.owner.source.config.archive_path,
+                    target_path=self.path,
+                )
 
         elif self.setup.final_collection == DELETE:
             if self.owner.source.config.dry_run:
@@ -474,6 +476,8 @@ class Setup:
     ephemeral: bool = False
     tags: list[str] = field(default_factory=list)
     limit: int = -1
+
+    termination_strategy_collection: str = 'nothing'  # FIXME - legacy field
 
     @classmethod
     def from_path(cls, path: Path, filename: str) -> Self:
