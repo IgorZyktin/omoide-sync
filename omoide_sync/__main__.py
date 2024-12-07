@@ -21,7 +21,13 @@ def sync(config_file: str, *, dry_run: bool = False) -> None:
     LOG.add(config.log_path, level=config.log_level, rotation='1 MB')
     LOG.info('Synchronizing {}', config.source_path.absolute())
 
-    source = models.Source(config, setup=models.Setup(**config.raw_setup))
+    source = models.Source(
+        config=config,
+        setup=models.Setup.from_path(config.source_path,
+                                     config.setup_filename,
+                                     models.Setup(**config.raw_setup))
+    )
+
     source.init()
 
     try:

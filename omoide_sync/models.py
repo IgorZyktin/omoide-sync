@@ -219,7 +219,6 @@ class Collection:
             if each.is_file():
                 continue
 
-            setup = Setup.from_path(each, self.owner.source.config.setup_filename)
             uuid, name = utils.get_uuid_and_name(each)
 
             new_item = Collection(
@@ -229,7 +228,7 @@ class Collection:
                 parent=self,
                 children=[],
                 path=each,
-                setup=Setup(**{**self.setup.model_dump(), **setup.model_dump()}),
+                setup=Setup.from_path(each, self.owner.source.config.setup_filename, self.setup),
             )
 
             self.children.append(new_item)
@@ -489,7 +488,6 @@ class Source:
             if each.is_file():
                 continue
 
-            setup = Setup.from_path(each, self.config.setup_filename)
             uuid, name = utils.get_uuid_and_name(each)
 
             for raw_user in self.config.users:
@@ -501,7 +499,9 @@ class Source:
                         login=raw_user.login,
                         password=raw_user.password,
                         path=each,
-                        setup=Setup(**{**self.setup.model_dump(), **setup.model_dump()}),
+                        setup=Setup.from_path(each,
+                                              self.config.setup_filename,
+                                              self.setup),
                     )
                     LOG.debug('Adding raw user {}', name)
                     self.users.append(new_user)
@@ -524,9 +524,9 @@ class Setup:
     termination_strategy_collection: str = 'nothing'  # FIXME - legacy field
 
     @classmethod
-    def from_path(cls, path: Path, filename: str) -> Self:
+    def from_path(cls, path: Path, filename: str, parent_setup: 'Setup') -> Self:
         """Create instance from given folder."""
-        setup = cls().model_dump()
+        setup = parent_setup.model_dump()
 
         try:
             with open(path / filename, encoding='utf-8') as f:
