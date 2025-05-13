@@ -5,7 +5,10 @@ import re
 import shutil
 from uuid import UUID
 
-TEMPLATE = re.compile(r'^\s?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?\s?(.+)')
+TEMPLATE = re.compile(
+    r'^\s?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?'
+    r'\s?(.+)'
+)
 
 
 def get_uuid_and_name(path: Path) -> tuple[UUID | None, str]:

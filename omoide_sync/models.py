@@ -168,11 +168,19 @@ class Collection:
 
         elif self.setup.init_collection == CREATE:
             if self.owner.source.config.dry_run:
-                LOG.info('Will create child of {} with name {}', self.parent, self.name)
+                LOG.info(
+                    'Will create child of {} with name {}',
+                    self.parent,
+                    self.name,
+                )
                 uuid = UUID('00000000-0000-0000-0000-000000000000')
                 name = self.name
             else:
-                LOG.info('Creating child of {} with name {}', self.parent.uuid, self.name)
+                LOG.info(
+                    'Creating child of {} with name {}',
+                    self.parent.uuid,
+                    self.name,
+                )
                 create_response = api_create_item_v1_items_post.sync(
                     body=ItemInput(
                         parent_uuid=self.parent.uuid,
@@ -244,7 +252,9 @@ class Collection:
                 parent=self,
                 children=[],
                 path=each,
-                setup=Setup.from_path(each, self.owner.source.config.setup_filename, self.setup),
+                setup=Setup.from_path(
+                    each, self.owner.source.config.setup_filename, self.setup
+                ),
             )
 
             self.children.append(new_item)
@@ -259,7 +269,9 @@ class Collection:
             try:
                 item.upload()
             except exceptions.ItemRelatedError:
-                msg = f'Failed to synchronize item uuid={item.uuid}, {item.name}'
+                msg = (
+                    f'Failed to synchronize item uuid={item.uuid}, {item.name}'
+                )
                 LOG.exception(msg)
 
         if self.setup.final_collection == MOVE:
@@ -294,8 +306,12 @@ class Collection:
             if all(
                 (
                     file.is_file(),
-                    file.name.endswith(self.owner.source.config.supported_formats),
-                    not file.name.startswith(self.owner.source.config.skip_prefixes),
+                    file.name.endswith(
+                        self.owner.source.config.supported_formats
+                    ),
+                    not file.name.startswith(
+                        self.owner.source.config.skip_prefixes
+                    ),
                 )
             )
         ]
@@ -309,8 +325,9 @@ class Collection:
 
         total_uploaded = self.owner.root_item.children_uploaded
 
-        if (self.setup.global_limit != -1
-                and self.setup.global_limit < (len(local_files) + total_uploaded)):
+        if self.setup.global_limit != -1 and self.setup.global_limit < (
+            len(local_files) + total_uploaded
+        ):
             threshold = self.setup.global_limit - total_uploaded
 
             if threshold <= 0:
@@ -357,9 +374,13 @@ class Collection:
 
         elif self.setup.final_item == DELETE:
             if self.owner.source.config.dry_run:
-                LOG.warning('Will delete files: {}', [str(x) for x in local_files])
+                LOG.warning(
+                    'Will delete files: {}', [str(x) for x in local_files]
+                )
             else:
-                LOG.warning('Deleting files: {}', [str(x) for x in local_files])
+                LOG.warning(
+                    'Deleting files: {}', [str(x) for x in local_files]
+                )
 
             for file in local_files:
                 self.owner.stats.deleted_files += 1
@@ -486,13 +507,17 @@ class User:
 
     def init(self) -> None:
         """Synchronize user with API."""
-        me_response = api_get_myself_v1_info_whoami_get.sync(client=self.client)
+        me_response = api_get_myself_v1_info_whoami_get.sync(
+            client=self.client
+        )
 
         if (remote_uuid := me_response.uuid) is None:
             msg = f'{self} is not authorized'
             raise RuntimeError(msg)
 
-        if self._initial_uuid is not None and str(self._initial_uuid) != str(remote_uuid):
+        if self._initial_uuid is not None and str(self._initial_uuid) != str(
+            remote_uuid
+        ):
             msg = (
                 f'Conflicting UUIDs for {self.login}, '
                 f'folder says {self._initial_uuid}, '
@@ -561,7 +586,6 @@ class Source:
                 continue
 
             for raw_user in self.config.users:
-
                 if raw_user.name == name:
                     new_user = User(
                         source=self,
@@ -570,13 +594,18 @@ class Source:
                         login=raw_user.login,
                         password=raw_user.password,
                         path=each,
-                        setup=Setup.from_path(each, self.config.setup_filename, self.setup),
+                        setup=Setup.from_path(
+                            each, self.config.setup_filename, self.setup
+                        ),
                     )
                     LOG.debug('Adding raw user {}', name)
                     self.users.append(new_user)
                     break
             else:
-                LOG.warning('There are no credentials for user named {}, skipping', name)
+                LOG.warning(
+                    'There are no credentials for user named {}, skipping',
+                    name,
+                )
 
 
 @dataclass
@@ -592,7 +621,9 @@ class Setup:
     global_limit: int = -1
 
     @classmethod
-    def from_path(cls, path: Path, filename: str, parent_setup: 'Setup') -> 'Setup':
+    def from_path(
+        cls, path: Path, filename: str, parent_setup: 'Setup'
+    ) -> 'Setup':
         """Create instance from given folder."""
         setup = parent_setup.model_dump()
 

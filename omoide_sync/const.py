@@ -1,0 +1,4 @@
+"""Global constants."""
+
+ENV_PREFIX = 'OMOIDE_SYNC'
+USERS_ENV_PREFIX = 'OMOIDE_SYNC_USERS'
