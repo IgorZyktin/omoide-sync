@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
 import shutil
-from typing import Literal, Union
+from typing import Literal
 from typing import Optional
+from typing import Union
 from uuid import UUID
 
 from loguru import logger
@@ -51,14 +52,16 @@ class Setup:
             setup = asdict(parent_setup)
 
         try:
-            with open(path / filename, mode='r', encoding='utf-8') as fd:
+            with open(path / filename, encoding='utf-8') as fd:
                 raw_setup = yaml.safe_load(fd)
         except FileNotFoundError:
             raw_setup = {}
-        else:
-            setup.update(raw_setup)
 
-        return cls(**raw_setup)
+        parent_tags = setup.pop('tags', [])
+        raw_tags = raw_setup.pop('tags', [])
+        setup.update(raw_setup)
+
+        return cls(**setup, tags=list(set(parent_tags + raw_tags)))
 
 
 CREATE = 'create'

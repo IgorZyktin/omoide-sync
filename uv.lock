@@ -191,6 +191,7 @@ version = "0.2.0"
 source = { virtual = "." }
 dependencies = [
     { name = "attrs" },
+    { name = "colorama" },
     { name = "httpx" },
     { name = "loguru" },
     { name = "nano-settings" },
@@ -211,6 +212,7 @@ tests = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=25.3.0" },
+    { name = "colorama", specifier = ">=0.4.6" },
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "mypy", marker = "extra == 'tests'", specifier = ">=1.10.1" },

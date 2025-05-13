@@ -37,10 +37,10 @@ class Config(ns.BaseConfig):
     users: Annotated[tuple[ConfigUser, ...], tuple] = ()
 
     supported_formats: Annotated[
-        frozenset[str],
-        frozenset,
+        tuple[str, ...],
+        tuple,
         ns.Separated(),
-    ] = frozenset(['png', 'jpg', 'jpeg', 'webp'])
+    ] = ('.png', '.jpg', '.jpeg', '.webp')
 
     log_path: Path = Path('omoide_sync.log')
     log_rotation: str = '1 MB'
@@ -49,12 +49,11 @@ class Config(ns.BaseConfig):
         'DEBUG'
     )
 
+    show_folder_structure: bool = True
     dry_run: bool = False
     limit: int = -1
 
-    skip_prefixes: Annotated[frozenset[str], frozenset, ns.Separated()] = (
-        frozenset(['_'])
-    )
+    skip_prefixes: Annotated[tuple[str, ...], tuple, ns.Separated()] = ('_',)
 
 
 USERNAME_TEMPLATE = re.compile(const.USERS_ENV_PREFIX + r'__USER_NAME_(\d+)')
@@ -134,7 +133,7 @@ def get_config(
     limit: int | None = None,
 ) -> Config:
     """Return global statistics singleton."""
-    global _CONFIG
+    global _CONFIG  # noqa: PLW0603
     if _CONFIG is None:
         _CONFIG = build_config(dry_run=dry_run, limit=limit)
     return _CONFIG

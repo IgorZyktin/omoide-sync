@@ -67,7 +67,7 @@ _STATS: Stats | None = None
 
 def get_stats() -> Stats:
     """Return global statistics singleton."""
-    global _STATS
+    global _STATS  # noqa: PLW0603
     if _STATS is None:
         _STATS = Stats()
     return _STATS
