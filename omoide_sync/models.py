@@ -3,10 +3,8 @@
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
-import inspect
 from pathlib import Path
 import shutil
-from typing import Any
 from typing import Literal
 from typing import Optional
 from uuid import UUID
@@ -27,6 +25,38 @@ from omoide_sync import exceptions
 from omoide_sync import utils
 
 LOG = logger
+
+
+@dataclass
+class Setup:
+    """Personal settings for collection."""
+
+    before_collection: Literal['create', 'raise'] = 'raise'
+    after_collection: Literal['move', 'delete', 'nothing'] = 'move'
+    after_item: Literal['move', 'delete', 'nothing'] = 'move'
+    ephemeral: bool = False
+    tags: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_path(
+        cls,
+        path: Path,
+        filename: str,
+        parent_setup: 'Setup',
+    ) -> 'Setup':
+        """Create instance from given folder."""
+        setup = asdict(parent_setup)
+
+        try:
+            with open(path / filename, mode='r', encoding='utf-8') as fd:
+                raw_setup = yaml.safe_load(fd)
+        except FileNotFoundError:
+            pass
+        else:
+            setup.update(raw_setup)
+
+        return cls(**raw_setup)
+
 
 CREATE = 'create'
 RAISE = 'raise'
@@ -562,48 +592,3 @@ class Source:
                     'There are no credentials for user named {}, skipping',
                     name,
                 )
-
-
-@dataclass
-class Setup:
-    """Personal settings for collection."""
-
-    init_collection: Literal['create', 'raise'] = 'raise'
-    final_collection: Literal['move', 'delete', 'nothing'] = 'move'
-    final_item: Literal['move', 'delete', 'nothing'] = 'move'
-    ephemeral: bool = False
-    tags: list[str] = field(default_factory=list)
-    limit: int = -1
-    global_limit: int = -1
-
-    @classmethod
-    def from_path(
-        cls, path: Path, filename: str, parent_setup: 'Setup'
-    ) -> 'Setup':
-        """Create instance from given folder."""
-        setup = parent_setup.model_dump()
-
-        try:
-            with open(path / filename, encoding='utf-8') as f:
-                raw_setup = yaml.safe_load(f)
-        except FileNotFoundError:
-            pass
-        else:
-            setup.update(raw_setup)
-
-        return Setup.from_dict(**setup)
-
-    @classmethod
-    def from_dict(cls, **kwargs: Any) -> 'Setup':
-        """Crete instance from arbitrary attributes."""
-        return cls(
-            **{
-                key: value
-                for key, value in kwargs.items()
-                if key in inspect.signature(cls).parameters
-            }
-        )
-
-    def model_dump(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return asdict(self)

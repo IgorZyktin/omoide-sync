@@ -50,6 +50,7 @@ class Config(ns.BaseConfig):
     )
 
     dry_run: bool = False
+    limit: int = -1
 
     skip_prefixes: Annotated[frozenset[str], frozenset, ns.Separated()] = (
         frozenset(['_'])
@@ -92,12 +93,15 @@ def get_users() -> list[ConfigUser]:
     return users
 
 
-def get_config(dry_run: bool | None) -> Config:
+def get_config(dry_run: bool | None, limit: int | None) -> Config:
     """Return Config instance."""
     config = ns.from_env(Config, env_prefix=const.ENV_PREFIX)
 
     if dry_run is not None:
         config.dry_run = dry_run
+
+    if limit is not None:
+        config.limit = limit
 
     if not config.data_folder.exists():
         msg = f'Data folder does not exist: {config.data_folder.absolute()}'

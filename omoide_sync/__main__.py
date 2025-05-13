@@ -6,16 +6,19 @@ from loguru import logger
 import typer
 
 from omoide_sync import cfg
-from omoide_sync import global_stats
+from omoide_sync import stats as global_stats
 
 LOG = logger
 app = typer.Typer()
 
 
 @app.command()
-def sync(dry_run: bool | None = None) -> None:  # noqa: FBT001
+def sync(
+    dry_run: bool | None = None,   # noqa: FBT001
+    limit: int | None = None,
+) -> None:
     """Synchronize local storage with API."""
-    config = cfg.get_config(dry_run=dry_run)
+    config = cfg.get_config(dry_run=dry_run, limit=limit)
     stats = global_stats.get_stats()
 
     LOG.add(
