@@ -35,50 +35,6 @@ DELETE = 'delete'
 NOTHING = 'nothing'
 
 
-@dataclass
-class Stats:
-    """Global statistic."""
-
-    uploaded_files: int = 0
-    uploaded_bytes: int = 0
-
-    moved_files: int = 0
-    moved_bytes: int = 0
-    moved_folders: int = 0
-
-    deleted_files: int = 0
-    deleted_bytes: int = 0
-    deleted_folders: int = 0
-
-    @property
-    def uploaded_mib(self) -> str:
-        """Return human-readable uploaded size."""
-        return f'{self.uploaded_bytes / 1024 / 1024:0.2f}'
-
-    @property
-    def moved_mib(self) -> str:
-        """Return human-readable moved size."""
-        return f'{self.moved_bytes / 1024 / 1024:0.2f}'
-
-    @property
-    def deleted_mib(self) -> str:
-        """Return human-readable deleted size."""
-        return f'{self.deleted_bytes / 1024 / 1024:0.2f}'
-
-    def __add__(self, other: 'Stats') -> 'Stats':
-        """Summarize two stats."""
-        return Stats(
-            uploaded_files=self.uploaded_files + other.uploaded_files,
-            uploaded_bytes=self.uploaded_bytes + other.uploaded_bytes,
-            moved_files=self.moved_files + other.moved_files,
-            moved_bytes=self.moved_bytes + other.moved_bytes,
-            moved_folders=self.moved_folders + other.moved_folders,
-            deleted_files=self.deleted_files + other.deleted_files,
-            deleted_bytes=self.deleted_bytes + other.deleted_bytes,
-            deleted_folders=self.deleted_folders + other.deleted_folders,
-        )
-
-
 class Collection:
     """Folder abstraction."""
 

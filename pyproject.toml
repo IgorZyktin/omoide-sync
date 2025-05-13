@@ -17,6 +17,7 @@ dependencies = [
     "python-dateutil >= 2.9.0.post0",
     "nano-settings>=0.1.3",
     "attrs>=25.3.0",
+    "python-utilz>=0.1.6",
 ]
 
 [project.optional-dependencies]
