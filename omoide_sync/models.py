@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
 import shutil
-from typing import Literal
+from typing import Literal, Union
 from typing import Optional
 from uuid import UUID
 
@@ -42,16 +42,19 @@ class Setup:
         cls,
         path: Path,
         filename: str,
-        parent_setup: 'Setup',
+        parent_setup: Union['Setup', None] = None,
     ) -> 'Setup':
         """Create instance from given folder."""
-        setup = asdict(parent_setup)
+        if parent_setup is None:
+            setup = {}
+        else:
+            setup = asdict(parent_setup)
 
         try:
             with open(path / filename, mode='r', encoding='utf-8') as fd:
                 raw_setup = yaml.safe_load(fd)
         except FileNotFoundError:
-            pass
+            raw_setup = {}
         else:
             setup.update(raw_setup)
 

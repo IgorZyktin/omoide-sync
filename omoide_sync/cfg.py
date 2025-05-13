@@ -93,7 +93,7 @@ def get_users() -> list[ConfigUser]:
     return users
 
 
-def get_config(dry_run: bool | None, limit: int | None) -> Config:
+def build_config(dry_run: bool | None, limit: int | None) -> Config:
     """Return Config instance."""
     config = ns.from_env(Config, env_prefix=const.ENV_PREFIX)
 
@@ -124,3 +124,17 @@ def get_config(dry_run: bool | None, limit: int | None) -> Config:
     config.users = tuple(get_users())
 
     return config
+
+
+_CONFIG: Config | None = None
+
+
+def get_config(
+    dry_run: bool | None = None,
+    limit: int | None = None,
+) -> Config:
+    """Return global statistics singleton."""
+    global _CONFIG
+    if _CONFIG is None:
+        _CONFIG = build_config(dry_run=dry_run, limit=limit)
+    return _CONFIG

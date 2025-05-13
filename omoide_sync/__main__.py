@@ -5,7 +5,7 @@ import sys
 from loguru import logger
 import typer
 
-from omoide_sync import cfg
+from omoide_sync import cfg, filesystem
 from omoide_sync import stats as global_stats
 
 LOG = logger
@@ -33,7 +33,10 @@ def sync(
 
     LOG.info('Synchronizing {}', config.data_folder.absolute())
 
-    # TODO - scan folders
+    folders = filesystem.scan_folders(config.data_folder.absolute())
+
+    for folder in folders:
+        folder.output()
 
     if config.dry_run:
         return
