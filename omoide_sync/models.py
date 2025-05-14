@@ -32,7 +32,7 @@ LOG = logger
 class Setup:
     """Personal settings for collection."""
 
-    before_collection: Literal['create', 'raise'] = 'raise'
+    no_collection: Literal['create', 'raise'] = 'raise'
     after_collection: Literal['move', 'delete', 'nothing'] = 'move'
     after_item: Literal['move', 'delete', 'nothing'] = 'move'
     ephemeral: bool = False

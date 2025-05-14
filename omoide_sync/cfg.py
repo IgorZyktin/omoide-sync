@@ -7,6 +7,7 @@ import re
 import sys
 from typing import Annotated
 from typing import Literal
+from typing import TypeAlias
 
 import nano_settings as ns
 
@@ -27,6 +28,9 @@ class ConfigUser:
         return f'{class_name}<{self.name}>'
 
 
+LogLevel: TypeAlias = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION']
+
+
 @dataclass
 class Config(ns.BaseConfig):
     """Global configuration."""
@@ -45,15 +49,16 @@ class Config(ns.BaseConfig):
     log_path: Path = Path('omoide_sync.log')
     log_rotation: str = '1 MB'
     setup_filename: str = 'setup.yaml'
-    log_level: Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION'] = (
-        'DEBUG'
-    )
+    log_level: Annotated[LogLevel, str.upper] = 'DEBUG'
 
     show_folder_structure: bool = True
     dry_run: bool = False
     limit: int = -1
 
-    skip_prefixes: Annotated[tuple[str, ...], tuple, ns.Separated()] = ('_',)
+    skip_prefixes: Annotated[tuple[str, ...], tuple, ns.Separated()] = (
+        '_',
+        '.',
+    )
 
 
 USERNAME_TEMPLATE = re.compile(const.USERS_ENV_PREFIX + r'__USER_NAME_(\d+)')

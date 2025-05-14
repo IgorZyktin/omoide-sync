@@ -7,6 +7,7 @@ from pathlib import Path
 
 from colorama import Fore
 from loguru import logger
+import python_utilz as pu
 
 from omoide_sync import cfg
 from omoide_sync.models import Setup
@@ -23,44 +24,40 @@ class Folder:
     children: list['Folder'] = field(default_factory=list)
     files: list[Path] = field(default_factory=list)
 
-    def output(self, depth: int = 0, position: str | None = None) -> None:
+    def __bool__(self) -> bool:
+        """Return true if we have something to upload."""
+        return any((self.files, any(bool(child) for child in self.children)))
+
+    def __len__(self) -> int:
+        """Return our files + our children's files."""
+        return len(self.files) + sum(len(child) for child in self.children)
+
+    def output(self, depth: int = 0) -> None:
         """Show folder contents."""
-        suffix = ''
-        if depth:
-            if position == 'one-of':
-                suffix = '├───'
-            elif position == 'last':
-                suffix = '└───'
+        if not self:
+            return
 
-        prefix = '\t' * (depth - 1)
-
-        if self.children:
-            folders = f'{Fore.RED}{len(self.children)}{Fore.RESET}'
-        else:
-            folders = '0'
+        prefix = '\t' * depth
 
         if self.files:
             files = f'{Fore.RED}{len(self.files)}{Fore.RESET}'
         else:
             files = '0'
 
-        if folders != '0' or files != '0':
-            ending = f' (folders={folders}, files={files})'
+        if files != '0':
+            ending = f' (files={pu.sep_digits(files)})'
         else:
             ending = ''
 
-        LOG.info(
-            f'{prefix}{suffix}{Fore.GREEN}{self.path.name}{Fore.RESET}{ending}'
-        )
+        if depth:
+            name = Fore.GREEN + self.path.name + Fore.RESET
+        else:
+            name = Fore.CYAN + self.path.name + Fore.RESET
 
-        total = len(self.children)
-        for i, child in enumerate(self.children, start=1):
-            if total > 1 and i < total:
-                position = 'one-of'
-            else:
-                position = 'last'
+        LOG.info(f'{prefix}{name}{ending}')
 
-            child.output(depth + 1, position)
+        for child in self.children:
+            child.output(depth + 1)
 
 
 def scan_folders(path: Path, parent: Folder | None = None) -> list[Folder]:

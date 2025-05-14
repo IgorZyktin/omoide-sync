@@ -3,6 +3,7 @@
 import sys
 
 from loguru import logger
+import python_utilz as pu
 import typer
 
 from omoide_sync import cfg
@@ -36,8 +37,9 @@ def sync(
 
     folders = filesystem.scan_folders(config.data_folder.absolute())
 
-    if config.show_folder_structure:
-        LOG.info('Got structure:')
+    total = sum(len(folder) for folder in folders)
+    if config.show_folder_structure and total:
+        LOG.info('Got structure with {} files:', pu.sep_digits(total))
         for folder in folders:
             folder.output()
 
