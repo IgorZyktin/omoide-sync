@@ -97,15 +97,9 @@ def get_users() -> list[ConfigUser]:
     return users
 
 
-def build_config(dry_run: bool | None, limit: int | None) -> Config:
+def build_config() -> Config:
     """Return Config instance."""
     config = ns.from_env(Config, env_prefix=const.ENV_PREFIX)
-
-    if dry_run is not None:
-        config.dry_run = dry_run
-
-    if limit is not None:
-        config.limit = limit
 
     if not config.data_folder.exists():
         msg = f'Data folder does not exist: {config.data_folder.absolute()}'
@@ -133,12 +127,9 @@ def build_config(dry_run: bool | None, limit: int | None) -> Config:
 _CONFIG: Config | None = None
 
 
-def get_config(
-    dry_run: bool | None = None,
-    limit: int | None = None,
-) -> Config:
+def get_config() -> Config:
     """Return global statistics singleton."""
     global _CONFIG  # noqa: PLW0603
     if _CONFIG is None:
-        _CONFIG = build_config(dry_run=dry_run, limit=limit)
+        _CONFIG = build_config()
     return _CONFIG

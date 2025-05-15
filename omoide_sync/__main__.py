@@ -15,12 +15,9 @@ app = typer.Typer()
 
 
 @app.command()
-def sync(
-    dry_run: bool | None = None,  # noqa: FBT001
-    limit: int | None = None,
-) -> None:
+def sync() -> None:
     """Synchronize local storage with API."""
-    config = cfg.get_config(dry_run=dry_run, limit=limit)
+    config = cfg.get_config()
     stats = global_stats.get_stats()
 
     LOG.add(
