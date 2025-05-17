@@ -21,7 +21,6 @@ from omoide_client.client import AuthenticatedClient
 from omoide_client.models import ItemInput
 import yaml
 
-from omoide_sync import cfg
 from omoide_sync import exceptions
 from omoide_sync import utils
 
@@ -144,12 +143,16 @@ class Collection:
         )
 
         if get_response is None:
-            msg = f'Failed to get children of {self.parent.uuid} with name {self.name!r}'
+            msg = (
+                f'Failed to get children of {self.parent.uuid} '
+                f'with name {self.name!r}'
+            )
             raise exceptions.ItemRelatedError(msg)
 
         if len(get_response.items) > 1:
             msg = (
-                f'Got more than one child of {self.parent} named {self.name!r}, '
+                f'Got more than one child of {self.parent} '
+                f'named {self.name!r}, '
                 'you should explicitly specify UUID in folder name'
             )
             raise exceptions.ItemRelatedError(msg)
@@ -185,14 +188,20 @@ class Collection:
                 )
 
                 if create_response is None:
-                    msg = f'Failed to create child of {self.parent.uuid} with name {self.name!r}'
+                    msg = (
+                        f'Failed to create child of {self.parent.uuid} '
+                        f'with name {self.name!r}'
+                    )
                     raise exceptions.ItemRelatedError(msg)
 
                 uuid = create_response.item.uuid
                 name = create_response.item.name
 
         else:
-            msg = f'Cannot find item by name {self.name!r} and parent {self.parent.uuid}'
+            msg = (
+                f'Cannot find item by name {self.name!r} '
+                f'and parent {self.parent.uuid}'
+            )
             raise exceptions.ItemRelatedError(msg)
 
         return uuid, name
@@ -389,7 +398,8 @@ class Collection:
                     name='',
                     is_collection=False,
                     tags=self.setup.tags,
-                    permissions=[],  # TODO - what about adding permissions in setup?
+                    permissions=[],
+                    # TODO - what about adding permissions in setup?
                 )
                 for _ in files
             ],
@@ -412,7 +422,7 @@ class User:
 
     def __init__(  # noqa: PLR0913
         self,
-        source: 'Source',
+        source,
         uuid: UUID | str | None,
         name: str,
         login: str,
@@ -427,7 +437,6 @@ class User:
         self.password = password
         self.path = path
         self.setup = setup
-        self.stats = Stats()
 
         self.collections: list[Collection] = []
 
@@ -538,7 +547,10 @@ class User:
                 self.root_item_uuid = UUID(user.extras['root_item_uuid'])
                 break
         else:
-            msg = f'Failed to find {self.login} among other {len(all_users.users)} users'
+            msg = (
+                f'Failed to find {self.login} '
+                f'among other {len(all_users.users)} users'
+            )
             raise exceptions.UserRelatedError(msg)
 
         LOG.debug('Got initial info on user {} {}', self.uuid, self.name)
@@ -552,49 +564,3 @@ class User:
             setup=self.setup,
             path=self.path,
         )
-
-
-class Source:
-    """Source folder abstraction."""
-
-    def __init__(self, config: cfg.Config, setup: 'Setup'):
-        """Initialize instance."""
-        self.config = config
-        self.setup = setup
-        self.users: list[User] = []
-
-    def init(self) -> None:
-        """Synchronize root with filesystem."""
-        LOG.debug('Initializing source: {}', self.config.source_path)
-
-        for each in self.config.source_path.iterdir():
-            if each.is_file():
-                continue
-
-            uuid, name = utils.get_uuid_and_name(each)
-
-            if name.startswith(self.config.skip_prefixes):
-                LOG.warning('Skipping {}', name)
-                continue
-
-            for raw_user in self.config.users:
-                if raw_user.name == name:
-                    new_user = User(
-                        source=self,
-                        uuid=uuid,
-                        name=name,
-                        login=raw_user.login,
-                        password=raw_user.password,
-                        path=each,
-                        setup=Setup.from_path(
-                            each, self.config.setup_filename, self.setup
-                        ),
-                    )
-                    LOG.debug('Adding raw user {}', name)
-                    self.users.append(new_user)
-                    break
-            else:
-                LOG.warning(
-                    'There are no credentials for user named {}, skipping',
-                    name,
-                )

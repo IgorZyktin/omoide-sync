@@ -8,8 +8,8 @@ import python_utilz as pu
 from omoide_sync import cfg
 from omoide_sync import exceptions
 from omoide_sync import filesystem
-from omoide_sync import uploader
 from omoide_sync import stats as global_stats
+from omoide_sync import uploader
 
 LOG = logger
 

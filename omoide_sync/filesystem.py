@@ -24,6 +24,14 @@ class Folder:
     children: list['Folder'] = field(default_factory=list)
     files: list[Path] = field(default_factory=list)
 
+    def __str__(self) -> str:
+        """Return string representation."""
+        class_name = type(self).__name__
+        return (
+            f"{class_name}<'{self.path}', "
+            f'children={len(self.children)}, files={len(self.files)}>'
+        )
+
     def __bool__(self) -> bool:
         """Return true if we have something to upload."""
         return any((self.files, any(bool(child) for child in self.children)))
@@ -54,7 +62,8 @@ class Folder:
         else:
             name = Fore.CYAN + self.path.name + Fore.RESET
 
-        LOG.info(f'{prefix}{name}{ending}')
+        message = f'{prefix}{name}{ending}'
+        LOG.info(message)
 
         for child in self.children:
             child.output(depth + 1)

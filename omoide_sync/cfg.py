@@ -28,7 +28,7 @@ class ConfigUser:
         return f'{class_name}<{self.name}>'
 
 
-LogLevel: TypeAlias = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION']
+LogLevel: TypeAlias = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'EXCEPTION']  # noqa: UP040
 
 
 @dataclass
@@ -51,8 +51,8 @@ class Config(ns.BaseConfig):
     setup_filename: str = 'setup.yaml'
     log_level: Annotated[LogLevel, str.upper] = 'DEBUG'
 
-    show_folder_structure: bool = True
-    dry_run: bool = False
+    show_folder_structure: Annotated[bool, ns.Boolean()] = True
+    dry_run: Annotated[bool, ns.Boolean()] = False
     limit: int = -1
 
     skip_prefixes: Annotated[tuple[str, ...], tuple, ns.Separated()] = (
