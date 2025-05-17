@@ -4,7 +4,6 @@ import sys
 
 from loguru import logger
 import python_utilz as pu
-import typer
 
 from omoide_sync import cfg
 from omoide_sync import exceptions
@@ -13,11 +12,9 @@ from omoide_sync import uploader
 from omoide_sync import stats as global_stats
 
 LOG = logger
-app = typer.Typer()
 
 
-@app.command()
-def sync() -> None:
+def main() -> None:
     """Synchronize local storage with API."""
     config = cfg.get_config()
     stats = global_stats.get_stats()
@@ -75,4 +72,4 @@ def sync() -> None:
 
 
 if __name__ == '__main__':
-    app()
+    main()
