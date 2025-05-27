@@ -42,6 +42,9 @@ def main() -> None:
     if config.dry_run:
         return
 
+    if config.limit == 0:
+        return
+
     for user_folder in folders:
         user_name = user_folder.path.name
         chosen_user: cfg.ConfigUser | None = None

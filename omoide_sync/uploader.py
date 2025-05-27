@@ -5,9 +5,11 @@ from uuid import UUID
 from httpx import BasicAuth
 from loguru import logger
 from omoide_client.api.info import api_get_myself_v1_info_whoami_get
+from omoide_client.api.items import api_create_many_items_v1_items_bulk_post
 from omoide_client.api.items import api_get_item_v1_items_item_uuid_get
 from omoide_client.api.items import api_get_many_items_v1_items_get
 from omoide_client.client import AuthenticatedClient
+from omoide_client.models import ItemInput
 
 from omoide_sync import cfg
 from omoide_sync import exceptions
@@ -82,6 +84,9 @@ class Uploader:
         if folder is None:
             folder = self.folder
 
+        if not folder:
+            return
+
         item_uuid = self.init_single_folder(parent_uuid, folder)
 
         if not folder.setup.ephemeral:
@@ -139,7 +144,38 @@ class Uploader:
 
     def upload_single_folder(self, parent_uuid: UUID, folder: Folder) -> None:
         """Upload all files in given folder."""
-        for file in folder.files:
-            LOG.debug('Uploading file {} for parent {}', file, parent_uuid)
-            # TODO - actually upload
-            # TODO - move after upload
+        files_to_upload = folder.files
+        if self.config.limit > 0:
+            files_left = self.config.limit - self.stats.uploaded_files
+            files_to_upload = files_to_upload[:files_left]
+
+        if not files_to_upload:
+            return
+
+        create_response = api_create_many_items_v1_items_bulk_post.sync(
+            body=[
+                ItemInput(
+                    parent_uuid=parent_uuid,
+                    name=file.name,
+                    is_collection=False,
+                    tags=folder.setup.tags,
+                    permissions=[],  # TODO - what about adding permissions in setup?
+                )
+                for file in files_to_upload
+            ],
+            client=self.client,
+        )
+
+        if create_response is None:
+            msg = (
+                f'Failed to create items parent {parent_uuid}, folder {folder}'
+            )
+            raise exceptions.ItemRelatedError(msg)
+
+        for remote, local in zip(
+            create_response.items, files_to_upload, strict=False
+        ):
+            LOG.debug('Uploading file {} for parent {}', local, parent_uuid)
+            # TODO - upload content
+            self.stats.uploaded_files += 1
+            self.stats.uploaded_bytes += local.stat().st_size
