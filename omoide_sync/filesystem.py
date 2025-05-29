@@ -10,7 +10,7 @@ from loguru import logger
 import python_utilz as pu
 
 from omoide_sync import cfg
-from omoide_sync.models import Setup
+from omoide_sync.setup_class import Setup
 
 LOG = logger
 
