@@ -27,10 +27,12 @@ def get_uuid_and_name(path: Path) -> tuple[UUID | None, str]:
     return None, name
 
 
-def move(source_path: Path, archive_path: Path, target_path: Path) -> None:
+def move(
+    data_folder_path: Path, archive_folder_path: Path, target_path: Path
+) -> Path:
     """Move folder or file."""
-    relative_path = target_path.relative_to(source_path)
-    destination_path = archive_path / relative_path
+    relative_path = target_path.relative_to(data_folder_path)
+    destination_path = archive_folder_path / relative_path
 
     if target_path.is_dir():
         shutil.copytree(
@@ -42,8 +44,10 @@ def move(source_path: Path, archive_path: Path, target_path: Path) -> None:
 
     else:
         new_folder = destination_path.parent
-        new_folder.mkdir(parents=True)
+        new_folder.mkdir(parents=True, exist_ok=True)
         shutil.move(
             target_path,
             destination_path,
         )
+
+    return destination_path

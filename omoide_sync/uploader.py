@@ -1,5 +1,7 @@
 """Class that handles uploading files to a remote server."""
 
+import os
+import shutil
 from uuid import UUID
 
 from httpx import BasicAuth
@@ -8,6 +10,11 @@ from omoide_client.api.info import api_get_myself_v1_info_whoami_get
 from omoide_client.api.items import api_create_many_items_v1_items_bulk_post
 from omoide_client.api.items import api_get_item_v1_items_item_uuid_get
 from omoide_client.api.items import api_get_many_items_v1_items_get
+from omoide_client.api.items import (
+    api_upload_item_v1_items_item_uuid_upload_put,
+)
+from omoide_client.models import BodyApiUploadItemV1ItemsItemUuidUploadPut
+from omoide_client.types import File
 from omoide_client.client import AuthenticatedClient
 from omoide_client.models import ItemInput
 
@@ -95,6 +102,17 @@ class Uploader:
         for child in folder.children:
             self.upload(item_uuid, child)
 
+        if folder.setup.after_collection == 'move':
+            destination = utils.move(
+                data_folder_path=self.config.data_folder,
+                archive_folder_path=self.config.archive_folder,
+                target_path=folder.path,
+            )
+            LOG.debug('Moved {} -> {}', folder.path, destination)
+        elif folder.setup.after_collection == 'delete':
+            LOG.debug('Deleting folder {}', folder.path)
+            shutil.rmtree(folder.path)
+
     def init_single_folder(
         self, parent_uuid: UUID | None, folder: Folder
     ) -> UUID:
@@ -176,6 +194,45 @@ class Uploader:
             create_response.items, files_to_upload, strict=False
         ):
             LOG.debug('Uploading file {} for parent {}', local, parent_uuid)
-            # TODO - upload content
-            self.stats.uploaded_files += 1
-            self.stats.uploaded_bytes += local.stat().st_size
+
+            with open(local, mode='rb') as fd:
+                upload_response = (
+                    api_upload_item_v1_items_item_uuid_upload_put.sync(
+                        item_uuid=remote.uuid,
+                        client=self.client,
+                        body=BodyApiUploadItemV1ItemsItemUuidUploadPut(
+                            file=File(
+                                payload=fd,
+                                file_name=local.name,
+                                mime_type=get_mime_type(local.suffix.lower()),
+                            )
+                        ),
+                    )
+                )
+
+                if upload_response is None:
+                    LOG.error('Failed to upload {}', local)
+                    continue
+
+                self.stats.uploaded_files += 1
+                self.stats.uploaded_bytes += local.stat().st_size
+
+            if folder.setup.after_item == 'move':
+                destination = utils.move(
+                    data_folder_path=self.config.data_folder,
+                    archive_folder_path=self.config.archive_folder,
+                    target_path=local,
+                )
+                LOG.debug('Moved {} -> {}', local, destination)
+            elif folder.setup.after_item == 'delete':
+                LOG.debug('Deleting file {}', local)
+                os.unlink(local)
+
+
+def get_mime_type(suffix: str) -> str:
+    """Return mime type of the file."""
+    if suffix in ('.jpg', '.jpeg'):
+        return 'image/jpeg'
+    elif suffix:
+        return f'image/{suffix.strip(".")}'
+    return 'image'

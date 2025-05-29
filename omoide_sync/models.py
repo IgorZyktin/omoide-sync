@@ -284,8 +284,8 @@ class Collection:
             self.owner.stats.moved_folders += 1
             if not self.owner.source.config.dry_run:
                 utils.move(
-                    source_path=self.owner.source.config.source_path,
-                    archive_path=self.owner.source.config.archive_path,
+                    data_folder_path=self.owner.source.config.source_path,
+                    archive_folder_path=self.owner.source.config.archive_path,
                     target_path=self.path,
                 )
 
@@ -368,8 +368,8 @@ class Collection:
                 self.owner.stats.moved_bytes += file.stat().st_size
                 if not self.owner.source.config.dry_run:
                     utils.move(
-                        source_path=self.owner.source.config.source_path,
-                        archive_path=self.owner.source.config.archive_path,
+                        data_folder_path=self.owner.source.config.source_path,
+                        archive_folder_path=self.owner.source.config.archive_path,
                         target_path=file,
                     )
 
